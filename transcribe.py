@@ -283,7 +283,7 @@ def main():
     if not args.text:
         # Interactive mode
         print("=== Кітайска-беларускі транскрыптар (НАН Беларусі 2026) ===")
-        print("Увядзіце тэкст (кітайскія іерогліфы, піньінь або рускую паладыцу). Для выхаду націсніце Ctrl+C.\n")
+        print("Увядзіце тэкст (кітайскія іерогліфы, піньінь або сістэму Паладыя). Для выхаду націсніце Ctrl+C.\n")
         try:
             while True:
                 line = input("Увод > ").strip()
@@ -293,14 +293,14 @@ def main():
                 has_cyrillic = bool(re.search(r'[а-яёА-ЯЁ]', line))
                 if has_cyrillic:
                     res = transcribe_russian(line)
-                    print(f"  🇧🇾 Беларуская: {res['be']}")
-                    print(f"  🇨🇳 Піньінь:    {res['pinyin']}")
-                    print(f"  🀄 Іерогліфы:   {res['hanzi']} ({res['desc']})\n")
+                    print(f"  Беларуская: {res['be']}")
+                    print(f"  Піньінь:    {res['pinyin']}")
+                    print(f"  Іерогліфы:  {res['hanzi']} ({res['desc']})\n")
                 else:
                     res = transcribe_chinese(line)
-                    print(f"  🇧🇾 Беларуская: {res['be']}")
-                    print(f"  🇨🇳 Піньінь:    {res['pinyin']}")
-                    print(f"  📜 Паладыца:   {res['ru']}\n")
+                    print(f"  Беларуская:      {res['be']}")
+                    print(f"  Піньінь:         {res['pinyin']}")
+                    print(f"  Сістэма Паладыя: {res['ru']}\n")
         except (KeyboardInterrupt, EOFError):
             print("\nБывайце!")
             return
@@ -317,12 +317,12 @@ def main():
     if args.json:
         print(json.dumps(res, ensure_ascii=False, indent=2))
     else:
-        print(f"Беларуская: {res['be']}")
-        print(f"Піньінь:    {res['pinyin']}")
+        print(f"Беларуская:      {res['be']}")
+        print(f"Піньінь:         {res['pinyin']}")
         if 'hanzi' in res:
-            print(f"Іерогліфы:  {res['hanzi']} ({res.get('desc', '')})")
+            print(f"Іерогліфы:       {res['hanzi']} ({res.get('desc', '')})")
         if 'ru' in res:
-            print(f"Паладыца:   {res['ru']}")
+            print(f"Сістэма Паладыя: {res['ru']}")
 
 if __name__ == "__main__":
     main()

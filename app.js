@@ -630,7 +630,7 @@
                 const textToCopy = targetElem.textContent.trim();
                 navigator.clipboard.writeText(textToCopy).then(() => {
                     const origHtml = btn.innerHTML;
-                    btn.innerHTML = '✓ Скапіявана!';
+                    btn.innerHTML = 'Скапіявана!';
                     btn.classList.add('copied');
                     setTimeout(() => {
                         btn.innerHTML = origHtml;
