@@ -186,13 +186,13 @@
             }
         }
 
-        const items = []; // interlinear breakdown items
+        const items = [];
         let fullBe = '';
         let fullPinyin = '';
         let fullRu = '';
 
         if (hasHanzi) {
-            // First check compound dictionary matches
+            // Check compound dictionary matches
             let pos = 0;
             while (pos < text.length) {
                 const ch = text[pos];
@@ -254,8 +254,7 @@
                 pos++;
             }
         } else {
-            // Text is likely Pinyin!
-            // Tokenize by spaces and punctuation
+            // Text is likely Pinyin
             const tokens = text.split(/([^\w'’]+)/);
             for (const tok of tokens) {
                 if (!tok || /^[^\w'’]+$/.test(tok)) {
@@ -303,8 +302,6 @@
     function transcribeRussian(text) {
         if (!text || !text.trim()) return null;
 
-        // Check traditional direct matches (like "Пекин", "Конфуций", etc.)
-        let processedText = text;
         const tradReplacements = [
             { ru: 'пекин', normRu: 'бэйцзин', hanzi: '北京', pinyin: 'Běijīng', be: 'Бэйдзін' },
             { ru: 'канфуцый', normRu: 'кунцзы', hanzi: '孔子', pinyin: 'Kǒngzǐ', be: 'Кун-дзы' },
@@ -313,7 +310,6 @@
             { ru: 'кунг-фу', normRu: 'гунфу', hanzi: '功夫', pinyin: 'Gōngfu', be: 'Гунфу' }
         ];
 
-        // Tokenize by words, hyphens, and whitespace
         const tokens = text.split(/([^\p{L}]+)/u);
         const sylsDetails = [];
         let fullBe = '';
@@ -369,13 +365,12 @@
                     ruSyl: r,
                     pySyl: py,
                     beSyl: pinyin_to_be[py] || r,
-                    candidates: cands.slice(0, 12)
+                    candidates: cands.slice(0, 14)
                 });
             });
         }
 
         // Reconstruct whole Chinese word match
-        // Search if clean pinyin sequence matches any known compound
         const cleanPySeq = sylsDetails.map(s => s.pySyl).join('');
         let bestCompound = null;
         for (const comp of compoundWords) {
@@ -411,7 +406,7 @@
 
     // UI Wire-up on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
-        setupTabs();
+        setupModeSwitcher();
         setupChineseTranscriber();
         setupRussianTranscriber();
         setupTable();
@@ -419,20 +414,30 @@
         setupCopyButtons();
     });
 
-    // Tab switcher
-    function setupTabs() {
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabPanes = document.querySelectorAll('.tab-pane');
+    // 2-Way Mode Switcher
+    function setupModeSwitcher() {
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const modePanes = document.querySelectorAll('.mode-pane');
 
-        tabBtns.forEach(btn => {
+        modeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-tab');
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabPanes.forEach(p => p.classList.remove('active'));
+                const targetId = btn.getAttribute('data-mode');
+                modeBtns.forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                modePanes.forEach(p => {
+                    p.classList.remove('active');
+                    p.style.display = 'none';
+                });
 
                 btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
                 const targetPane = document.getElementById(targetId);
-                if (targetPane) targetPane.classList.add('active');
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                    targetPane.style.display = 'block';
+                }
             });
         });
     }
@@ -479,7 +484,6 @@
 
         if (input) {
             input.addEventListener('input', update);
-            // Initial call if not empty
             if (input.value) update();
         }
     }
@@ -518,17 +522,16 @@
                     outZhCompoundDesc.textContent = `${res.compound.desc || ''} (${res.compound.pinyin})`;
                 }
             } else {
-                // Compose first candidates
                 const composed = res.sylsDetails.map(s => s.candidates && s.candidates.length > 0 ? s.candidates[0].char : '').join('');
                 if (outZhCompound) {
                     outZhCompound.innerHTML = `<span class="big-hanzi">${composed}</span> <span class="badge-cand">Адноўлена па складах</span>`;
                 }
                 if (outZhCompoundDesc) {
-                    outZhCompoundDesc.textContent = 'Збярыце патрэбныя іерогліфы ніжэй, калі патрабуецца іншы амафон:';
+                    outZhCompoundDesc.textContent = 'Выберыце патрэбныя іерогліфы ніжэй, калі патрабуецца іншы варыянт:';
                 }
             }
 
-            // Interactive character candidates builder
+            // Interactive character candidates builder (Wrapped, No horizontal scroll)
             if (outBuilder) {
                 outBuilder.innerHTML = '';
                 const selectedChars = [];
@@ -549,7 +552,6 @@
                     if (candidates.length === 0) {
                         candList.innerHTML = '<span class="text-muted">—</span>';
                     } else {
-                        // Default selection
                         selectedChars[sylIndex] = candidates[0].char;
 
                         candidates.forEach((cand, candIndex) => {
@@ -595,18 +597,18 @@
                 const target = btn.getAttribute('data-target');
 
                 if (target === 'zh') {
+                    const modeZhBtn = document.querySelector('[data-mode="mode-zh"]');
+                    if (modeZhBtn) modeZhBtn.click();
                     const zhInput = document.getElementById('zh-input');
-                    const tabBtn = document.querySelector('[data-tab="tab-zh"]');
-                    if (tabBtn) tabBtn.click();
                     if (zhInput) {
                         zhInput.value = text;
                         zhInput.dispatchEvent(new Event('input'));
                         zhInput.focus();
                     }
                 } else if (target === 'ru') {
+                    const modeRuBtn = document.querySelector('[data-mode="mode-ru"]');
+                    if (modeRuBtn) modeRuBtn.click();
                     const ruInput = document.getElementById('ru-input');
-                    const tabBtn = document.querySelector('[data-tab="tab-ru"]');
-                    if (tabBtn) tabBtn.click();
                     if (ruInput) {
                         ruInput.value = text;
                         ruInput.dispatchEvent(new Event('input'));
@@ -641,7 +643,7 @@
         });
     }
 
-    // Syllables Reference Table
+    // Syllables Reference Table (inside <details>)
     function setupTable() {
         const tableBody = document.getElementById('table-body');
         const searchInput = document.getElementById('table-search');
@@ -650,7 +652,6 @@
 
         if (!tableBody) return;
 
-        // Build list of all syllables
         const allSyllables = [];
         const pinyinKeys = Object.keys(pinyin_to_be).sort();
 
@@ -669,7 +670,6 @@
             let count = 0;
 
             allSyllables.forEach(s => {
-                // Filter check
                 if (currentFilter !== 'all') {
                     if (currentFilter === 'vowel') {
                         if (!/^[aeiouü]/.test(s.py)) return;
@@ -678,7 +678,6 @@
                     }
                 }
 
-                // Search query check
                 if (searchQuery) {
                     const q = searchQuery.toLowerCase();
                     const match = s.py.includes(q) || s.be.includes(q) || s.ru.includes(q) || s.chars.includes(q);

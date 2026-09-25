@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кітайска-беларускі транскрыптар | Нарматыўная сістэма НАН Беларусі 2026</title>
-    <meta name="description" content="Дакладная афіцыйная практычная транскрыпцыя кітайскіх слоў (іерогліфаў і піньіня) на беларускую мову, а таксама перавод з рускай сістэмы Паладыя з аднаўленнем кітайскага напісання.">
+    <meta name="description" content="Дакладная афіцыйная практычная транскрыпцыя кітайскіх слоў на беларускую мову, а таксама канвертацыя з рускай сістэмы Паладыя з аднаўленнем кітайскага напісання.">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,40 +12,34 @@
         <!-- Header -->
         <header>
             <div class="logo-badge">
-                <span>🇧🇾</span> Нарматыўная база НАН Беларусі (2026)
+                <span>🇧🇾</span> Нарматыўная база НАН Беларусі і РІКК БДУ (2026)
             </div>
             <h1>Кітайска-беларускі транскрыптар</h1>
             <p class="subtitle">
-                Дакладная транскрыпцыя кітайскіх слоў і піньіня на беларускую мову, а таксама канвертацыя з рускай паладыцы з узнаўленнем кітайскага напісання.
+                Дакладная транскрыпцыя кітайскіх слоў на беларускую мову і перавод з рускай сістэмы Паладыя з узнаўленнем іерогліфаў.
             </p>
         </header>
 
-        <!-- Navigation Tabs -->
-        <nav class="tabs-nav" role="tablist">
-            <button class="tab-btn active" data-tab="tab-zh" role="tab" aria-selected="true">
-                <span>🇨🇳</span> Кітайскія словы / Піньінь ➔ Беларуская
+        <!-- Main 2-way Mode Switcher -->
+        <div class="mode-switcher" role="tablist">
+            <button class="mode-btn active" data-mode="mode-zh" role="tab" aria-selected="true">
+                🇨🇳 З кітайскай / піньіня ➔ на беларускую
             </button>
-            <button class="tab-btn" data-tab="tab-ru" role="tab" aria-selected="false">
-                <span>📜</span> Руская паладыца ➔ Беларуская + Іерогліфы
+            <button class="mode-btn" data-mode="mode-ru" role="tab" aria-selected="false">
+                📜 З сістэмы Паладыя ➔ на беларускую і кітайскую
             </button>
-            <button class="tab-btn" data-tab="tab-table" role="tab" aria-selected="false">
-                <span>📖</span> Зводная табліца складоў
-            </button>
-            <button class="tab-btn" data-tab="tab-about" role="tab" aria-selected="false">
-                <span>ℹ️</span> Правілы і даведка
-            </button>
-        </nav>
+        </div>
 
-        <!-- TAB 1: Chinese / Pinyin -> Belarusian -->
-        <section id="tab-zh" class="tab-pane active" role="tabpanel">
+        <!-- MODE 1: Chinese / Pinyin -> Belarusian -->
+        <main id="mode-zh" class="mode-pane active" role="tabpanel">
             <div class="card">
-                <h2 class="card-title">Перадача кітайскіх слоў або піньіня на беларускую</h2>
+                <h2 class="card-title">Транскрыпцыя з кітайскай мовы або піньіня</h2>
                 <p class="card-desc">Устаўце кітайскія іерогліфы (спрошчаныя ці традыцыйныя) або піньінь (з танальнымі знакамі ці без).</p>
 
                 <!-- Presets -->
                 <div class="presets-bar">
                     <span class="presets-label">Прыклады:</span>
-                    <button class="preset-btn" data-target="zh" data-text="北京">北京 (Бэйдзін)</button>
+                    <button class="preset-btn" data-target="zh" data-text="北京">北京 (Бэйдзін / Пекін)</button>
                     <button class="preset-btn" data-target="zh" data-text="长安">长安 (Чан’ань)</button>
                     <button class="preset-btn" data-target="zh" data-text="庄子">庄子 (Джуан-дзы)</button>
                     <button class="preset-btn" data-target="zh" data-text="四川">四川 (Сычуань)</button>
@@ -80,7 +74,7 @@
                             <div id="zh-out-py" class="subcard-content"></div>
                         </div>
                         <div class="result-subcard">
-                            <div class="subcard-label">📜 Традыцыйная руская паладыца</div>
+                            <div class="subcard-label">📜 Руская транскрыпцыя (сістэма Паладыя)</div>
                             <div id="zh-out-ru" class="subcard-content"></div>
                         </div>
                     </div>
@@ -92,13 +86,13 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </main>
 
-        <!-- TAB 2: Russian Palladius -> Belarusian + Reconstructed Chinese -->
-        <section id="tab-ru" class="tab-pane" role="tabpanel">
+        <!-- MODE 2: Russian Palladius -> Belarusian + Reconstructed Chinese -->
+        <main id="mode-ru" class="mode-pane" role="tabpanel" style="display: none;">
             <div class="card">
                 <h2 class="card-title">Канвертацыя з рускай транскрыпцыі (сістэмы Паладыя)</h2>
-                <p class="card-desc">Устаўце рускае напісанне (напрыклад, <em>Чжуан-цзы, Бэйцзин, Сычуань, Чанъань, Тяньаньмэнь</em>). Сістэма створыць дакладную беларускую транскрыпцыю і адновіць кітайскія іерогліфы.</p>
+                <p class="card-desc">Устаўце напісанне ў сістэме Паладыя (напрыклад: <em>Чжуан-цзы, Бэйцзин, Сычуань, Чанъань, Тяньаньмэнь, Си Цзиньпин</em>). Праграма створыць дакладную беларускую транскрыпцыю і адновіць кітайскія іерогліфы.</p>
 
                 <!-- Presets -->
                 <div class="presets-bar">
@@ -151,9 +145,9 @@
                             </div>
                         </div>
 
-                        <!-- Interactive Syl Candidates Builder -->
+                        <!-- Interactive Syl Candidates Builder (Wrapped, No horizontal scroll) -->
                         <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">
-                            Канструктар іерогліфаў па складах (клікніце на патрэбны іерогліф, каб змяніць):
+                            Паскладовы выбар іерогліфаў-амафонаў (націсніце, каб змяніць варыянт):
                         </div>
                         <div id="ru-out-builder" class="builder-columns-container"></div>
                     </div>
@@ -167,13 +161,16 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </main>
 
-        <!-- TAB 3: Syllables Reference Table -->
-        <section id="tab-table" class="tab-pane" role="tabpanel">
-            <div class="card">
-                <h2 class="card-title">Нарматыўная табліца транскрыпцыі кітайскіх складоў</h2>
-                <p class="card-desc">Поўная табліца 405 нарматыўных складоў з супастаўленнем піньіня, беларускай і рускай транскрыпцый.</p>
+        <!-- COLLAPSIBLE SECTION 1: Syllables Reference Table -->
+        <details class="collapsible-card">
+            <summary class="collapsible-header">
+                <span class="collapsible-title">📖 Зводная нарматыўная табліца ўсіх 405 складоў</span>
+                <span class="collapsible-icon">▼</span>
+            </summary>
+            <div class="collapsible-body">
+                <p class="card-desc">Поўная параўнальная табліца складоў піньіня, беларускай нормы 2026 года і сістэмы Паладыя.</p>
 
                 <!-- Search and Filters -->
                 <div class="table-toolbar">
@@ -219,7 +216,7 @@
                             <tr>
                                 <th>Піньінь (Pinyin)</th>
                                 <th>Беларуская (Норма 2026)</th>
-                                <th>Паладыца (Руская)</th>
+                                <th>Сістэма Паладыя (Руская)</th>
                                 <th>Частыя іерогліфы</th>
                             </tr>
                         </thead>
@@ -229,60 +226,65 @@
                     </table>
                 </div>
             </div>
-        </section>
+        </details>
 
-        <!-- TAB 4: Rules and About -->
-        <section id="tab-about" class="tab-pane" role="tabpanel">
-            <div class="card info-content">
-                <h2 class="card-title">Пра Беларускую практычную транскрыпцыю кітайскай мовы</h2>
-                <p>
-                    <strong>Беларуская практычная транскрыпцыя кітайскай мовы</strong> — афіцыйная нарматыўная сістэма перадачы кітайскіх складоў (піньінь) сродкамі беларускай мовы, ухваленая Вучоным саветам Цэнтра даследаванняў беларускай культуры, мовы і літаратуры НАН Беларусі і Саветам РІКК БДУ (2025—2026 гг.).
-                </p>
-
-                <h3>Асноўныя адрозненні ад рускай сістэмы Паладыя</h3>
+        <!-- COLLAPSIBLE SECTION 2: Rules and Orthography Guide -->
+        <details class="collapsible-card">
+            <summary class="collapsible-header">
+                <span class="collapsible-title">ℹ️ Правілы правапісу: разам, асобна, праз злучок і апостраф</span>
+                <span class="collapsible-icon">▼</span>
+            </summary>
+            <div class="collapsible-body info-content">
+                <h3>1. Калі пішацца асобна, разам ці праз злучок?</h3>
+                
+                <p><strong>Асабовыя імёны людзей:</strong></p>
                 <ul>
-                    <li><code>zh</code> перадаецца як <strong>дж</strong> (<em>zhang</em> — <strong>джан</strong>, <em>zhi</em> — <strong>джы</strong>; замест рускага <em>чжан</em>, <em>чжи</em>).</li>
-                    <li><code>z</code> перадаецца як <strong>дз</strong> (<em>zi</em> — <strong>дзы</strong>, <em>za</em> — <strong>дза</strong>; замест рускага <em>цзы</em>).</li>
-                    <li><code>j</code> перадаецца як <strong>дзі</strong> / <strong>дзь</strong> (<em>ji</em> — <strong>дзі</strong>, <em>jie</em> — <strong>дзье</strong>; замест рускага <em>цзи</em>, <em>цзе</em>).</li>
-                    <li><code>q</code> перадаецца як <strong>ці</strong> / <strong>ць</strong> (<em>qi</em> — <strong>ці</strong>, <em>qian</em> — <strong>цьень</strong>; замест рускага <em>ци</em>, <em>цянь</em>).</li>
-                    <li><code>x</code> перадаецца як <strong>сі</strong> / <strong>сь</strong> (<em>xi</em> — <strong>сі</strong>, <em>xian</em> — <strong>сьень</strong>; замест рускага <em>си</em>, <em>сянь</em>).</li>
-                    <li><code>d</code> і <code>t</code> перад <code>i</code> захоўваюць цвёрдасць: <em>di</em> — <strong>ды</strong>, <em>ti</em> — <strong>ты</strong>, <em>ding</em> — <strong>дын</strong>.</li>
-                    <li>Фіналь <code>-ian</code> перадаецца праз <strong>-ень</strong> з мяккім знакам ці апострафам: <em>tian</em> — <strong>т'ень</strong>, <em>jian</em> — <strong>дзьень</strong>.</li>
-                    <li>Дыфтонгі <code>-ou</code> / <code>-iu</code> перадаюцца з літарай <strong>ў</strong>: <em>zhou</em> — <strong>джоў</strong>, <em>you</em> — <strong>ёў</strong>, <em>liu</em> — <strong>льёў</strong>.</li>
-                    <li>Фіналь <code>-uo</code> перадаецца як <strong>-уо</strong> (<em>shuo</em> — <strong>шуо</strong>, <em>guo</em> — <strong>гуо</strong>).</li>
-                    <li>Склад <code>wu</code> перадаецца як <strong>ву</strong> (<em>Wuhan</em> — <strong>Вухань</strong>).</li>
+                    <li>Прозвішча і імя кітайцаў пішуцца <strong>асобна</strong>, кожнае з вялікай літары: <em>Мао Дзэдун</em> (прозвішча Мао, імя Дзэдун), <em>Сі Дзіньпін</em>, <em>Дэн Сяопін</em>.</li>
+                    <li>Двухскладовыя асабовыя імёны пішуцца <strong>разам</strong>, у адно слова (як у сучасным піньіні), а не праз злучок.</li>
+                    <li>Старажытныя імёны з філасофскім суфіксам <em>-дзы</em> (子 - zǐ «мудрэц, настаўнік») традыцыйна пішуцца <strong>праз злучок</strong>: <em>Лао-дзы, Джуан-дзы, Кун-дзы (Канфуцый), Мэн-дзы, Сунь-дзы</em>.</li>
+                </ul>
+
+                <p><strong>Геаграфічныя назвы (тапонімы):</strong></p>
+                <ul>
+                    <li>Усе склады аднаго кітайскага ўласнага наймення пішуцца <strong>разам</strong>, у адно слова: <em>Бэйдзін, Шанхай, Сычуань, Чанчунь, Т’еньдзінь, Чунцін, Шыдзьяджуан, Гуанджоў, Вухань, Чанша</em>.</li>
+                    <li><strong>Праз злучок</strong> пішуцца састаўныя назвы адміністрацыйных раёнаў і рэгіёнаў, утвораныя спалучэннем уласнага наймення і назвы народа: <em>Гуансі-Джуанскі аўтаномны раён, Нінсья-Хуэйскі аўтаномны раён, Сіньдзьян-Уйгурскі аўтаномны раён</em>.</li>
+                    <li><strong>Асобна</strong> пішуцца наменклатурныя словы і азначэнні: <em>рака Яндзы, рака Хуанхэ, горы Т’еньшань, правінцыя Сычуань</em>. Калі геаграфічны тэрмін зліўся з асновай гістарычна — разам: <em>Хуанхэ, Хэйлундзьян</em>.</li>
                 </ul>
 
                 <div class="rule-highlight">
-                    <strong>Правіла стыку складоў:</strong><br>
-                    Калі першы склад заканчваецца на літару <strong>-н</strong> (<em>-n</em>), а наступны пачынаецца на галосную (<em>a, e, o, u, i</em>), паміж імі абавязкова ставіцца <strong>апостраф</strong>.<br>
-                    <em>Прыклад:</em> 长安 (Chang'an) — <strong>Чан’ань</strong>; 天安门 (Tian'anmen) — <strong>Т’еньаньмэнь</strong>.
+                    <strong>2. Правіла стыку складоў (апостраф):</strong><br>
+                    Згодна з афіцыйнай нормай 2026 года, калі першы склад заканчваецца на літару <strong>-н</strong> (<em>-n</em>), а наступны пачынаецца на <strong>галосную</strong>, паміж імі абавязкова ставіцца <strong>апостраф</strong>.<br>
+                    <em>Прыклады:</em> 长安 (Chang'an) — <strong>Чан’ань</strong>; 天安门 (Tian'anmen) — <strong>Т’еньаньмэнь</strong>.
                 </div>
 
-                <h3>Крыніцы і спасылкі</h3>
+                <h3>3. Традыцыйныя назвы і выключэнні</h3>
+                <p>У акадэмічным слоўніку 2026 года замацавана, што для шэрагу гістарычна ўкаранёных геаграфічных назваў захоўваецца традыцыйнае напісанне (або падаецца ў дужках):</p>
                 <ul>
+                    <li><strong>Пекін</strong> (традыцыйная афіцыйная беларуская назва сталіцы КНР; чыста паскладовая транскрыпцыя піньіня Běijīng — <em>Бэйдзін</em>);</li>
+                    <li><strong>рака Яндзы</strong> (традыцыйна <em>Янцзы</em>) для 长江 Chángjiāng («Вялікая рака»);</li>
+                    <li><strong>Макао / Макаа</strong> для 澳门 Àomén (нарматыўнае <em>Аомэнь</em>);</li>
+                    <li><strong>Ганконг</strong> для 香港 Xiānggǎng (нарматыўнае <em>Сьянган</em>);</li>
+                    <li><strong>Нанкін</strong> для 南京 Nánjīng (нарматыўнае <em>Наньдзін</em>);</li>
+                    <li><strong>Канфуцый</strong> для 孔子 Kǒngzǐ (нарматыўнае <em>Кун-дзы</em>).</li>
+                </ul>
+
+                <h3>4. Чаму правільна «сістэма Паладыя», а не «паладыца»?</h3>
+                <p>
+                    Слова «паладыца» з'яўляецца нефармальным жаргонным утварэннем рускамоўнага інтэрнэту. У навуковай літаратуры, беларускім мовазнаўстве і энцыклапедыях афіцыйна ўжываецца толькі тэрмін <strong>«сістэма Паладыя»</strong> або <strong>«транскрыпцыйная сістэма Паладыя»</strong> (распрацаваная ў XIX ст. архімандрытам Паладыем Кафаравым).
+                </p>
+
+                <h3>5. Крыніцы</h3>
+                <ul>
+                    <li><strong>Кітайска-беларускі слоўнік</strong> / Уклад.: М. А. Баравік [і інш.]. — Мінск: Калорград, 2026. — 965 с. (зацверджана Вучоным саветам Цэнтра даследаванняў беларускай культуры, мовы і літаратуры НАН Беларусі і Саветам РІКК БДУ).</li>
                     <li><a href="https://be.wikipedia.org/wiki/Беларуская_практычная_транскрыпцыя_кітайскай_мовы" target="_blank" rel="noopener">Беларуская практычная транскрыпцыя кітайскай мовы (Вікіпедыя)</a></li>
-                    <li><a href="https://be.wikipedia.org/wiki/Беларуская_практычная_транскрыпцыя_кітайскай_мовы/Зводны_спіс_асноўных_кітайскіх_тапонімаў" target="_blank" rel="noopener">Зводны спіс асноўных кітайскіх тапонімаў</a></li>
-                    <li><a href="https://ru.wikipedia.org/wiki/Транскрипционная_система_Палладия" target="_blank" rel="noopener">Транскрипционная система Палладия (Вікіпедыя)</a></li>
-                    <li>Баравік М. А. і інш. <em>Кітайска-беларускі слоўнік</em>. — Мінск: Калорград, 2026. — 965 с.</li>
                 </ul>
             </div>
-        </section>
-
-        <!-- GitHub Deploy Notice -->
-        <div class="github-banner">
-            <div class="github-banner-text">
-                <strong>🐙 Публікацыя на GitHub Pages:</strong> Старонка цалкам аўтаномная і гатовая да размяшчэння на вашым GitHub.
-            </div>
-            <a href="https://github.com" target="_blank" rel="noopener" class="github-banner-link">
-                <span>Адкрыць GitHub</span> ➔
-            </a>
-        </div>
+        </details>
 
         <!-- Footer -->
         <footer>
             <p>
-                Кітайска-беларускі транскрыптар © 2026. Створана на аснове нарматыўнай базы НАН Беларусі і РІКК БДУ.
+                Кітайска-беларускі транскрыптар © 2026. Нарматыўная база НАН Беларусі і РІКК БДУ.
             </p>
         </footer>
     </div>
