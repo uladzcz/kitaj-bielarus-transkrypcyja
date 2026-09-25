@@ -465,18 +465,26 @@
         ]
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function init() {
         setupModeSwitcher();
         setupInputHandler();
+        setupPresetsHandler();
         setupCopyButtons();
         setupTable();
         renderPresets();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     // Setup Mode Switcher (Seamless transition in the same card)
     function setupModeSwitcher() {
         const btnZh = document.getElementById('btn-mode-zh');
         const btnRu = document.getElementById('btn-mode-ru');
+        const switcher = document.querySelector('.mode-switcher');
         const card = document.getElementById('converter-card');
         const title = document.getElementById('card-title');
         const desc = document.getElementById('card-desc');
@@ -489,34 +497,46 @@
             currentMode = newMode;
 
             if (newMode === 'zh') {
-                btnZh.classList.add('active');
-                btnZh.setAttribute('aria-selected', 'true');
-                btnRu.classList.remove('active');
-                btnRu.setAttribute('aria-selected', 'false');
+                if (btnZh) {
+                    btnZh.classList.add('active');
+                    btnZh.setAttribute('aria-selected', 'true');
+                }
+                if (btnRu) {
+                    btnRu.classList.remove('active');
+                    btnRu.setAttribute('aria-selected', 'false');
+                }
 
-                card.classList.remove('mode-ru');
-                card.classList.add('mode-zh');
+                if (card) {
+                    card.classList.remove('mode-ru');
+                    card.classList.add('mode-zh');
+                }
 
-                title.textContent = 'Транскрыпцыя з кітайскай мовы';
-                desc.textContent = 'Устаўце кітайскія іерогліфы або піньінь.';
-                input.placeholder = 'Устаўце кітайскі тэкст або піньінь, напрыклад: 北京, Cháng\'ān, 庄子...';
+                if (title) title.textContent = 'Транскрыпцыя з кітайскай мовы';
+                if (desc) desc.textContent = 'Устаўце кітайскія іерогліфы або піньінь.';
+                if (input) input.placeholder = 'Устаўце кітайскі тэкст або піньінь, напрыклад: 北京, Cháng\'ān, 庄子...';
 
-                labelPinyin.textContent = 'Піньінь (Pinyin)';
+                if (labelPinyin) labelPinyin.textContent = 'Піньінь (Pinyin)';
                 if (cardPaladius) cardPaladius.style.display = 'block';
             } else {
-                btnRu.classList.add('active');
-                btnRu.setAttribute('aria-selected', 'true');
-                btnZh.classList.remove('active');
-                btnZh.setAttribute('aria-selected', 'false');
+                if (btnRu) {
+                    btnRu.classList.add('active');
+                    btnRu.setAttribute('aria-selected', 'true');
+                }
+                if (btnZh) {
+                    btnZh.classList.remove('active');
+                    btnZh.setAttribute('aria-selected', 'false');
+                }
 
-                card.classList.remove('mode-zh');
-                card.classList.add('mode-ru');
+                if (card) {
+                    card.classList.remove('mode-zh');
+                    card.classList.add('mode-ru');
+                }
 
-                title.textContent = 'Транскрыпцыя з сістэмы Паладыя';
-                desc.textContent = 'Устаўце словы ў рускай сістэме Паладыя.';
-                input.placeholder = 'Устаўце словы ў сістэме Паладыя, напрыклад: Чжуан-цзы, Бэйцзин, Чанъань...';
+                if (title) title.textContent = 'Транскрыпцыя з сістэмы Паладыя';
+                if (desc) desc.textContent = 'Устаўце словы ў рускай сістэме Паладыя.';
+                if (input) input.placeholder = 'Устаўце словы ў сістэме Паладыя, напрыклад: Чжуан-цзы, Бэйцзин, Чанъань...';
 
-                labelPinyin.textContent = 'Адноўлены піньінь (Pinyin)';
+                if (labelPinyin) labelPinyin.textContent = 'Адноўлены піньінь (Pinyin)';
                 if (cardPaladius) cardPaladius.style.display = 'none';
             }
 
@@ -524,8 +544,34 @@
             triggerUpdate();
         }
 
+        if (switcher) {
+            switcher.addEventListener('click', (e) => {
+                const btn = e.target.closest('.mode-btn');
+                if (!btn) return;
+                const mode = btn.getAttribute('data-mode') || (btn.id === 'btn-mode-ru' ? 'ru' : 'zh');
+                switchMode(mode);
+            });
+        }
         if (btnZh) btnZh.addEventListener('click', () => switchMode('zh'));
         if (btnRu) btnRu.addEventListener('click', () => switchMode('ru'));
+    }
+
+    // Presets click delegation (Always works, even for pre-rendered HTML buttons)
+    function setupPresetsHandler() {
+        const container = document.getElementById('presets-buttons');
+        if (!container) return;
+
+        container.addEventListener('click', (e) => {
+            const btn = e.target.closest('.preset-btn');
+            if (!btn) return;
+            const input = document.getElementById('main-input');
+            const text = btn.getAttribute('data-text') || btn.textContent.split('(')[0].trim();
+            if (input) {
+                input.value = text;
+                triggerUpdate();
+                input.focus();
+            }
+        });
     }
 
     // Render presets dynamically without moving elements
@@ -540,14 +586,7 @@
             const btn = document.createElement('button');
             btn.className = 'preset-btn';
             btn.textContent = p.label;
-            btn.addEventListener('click', () => {
-                const input = document.getElementById('main-input');
-                if (input) {
-                    input.value = p.text;
-                    triggerUpdate();
-                    input.focus();
-                }
-            });
+            btn.setAttribute('data-text', p.text);
             container.appendChild(btn);
         });
     }
