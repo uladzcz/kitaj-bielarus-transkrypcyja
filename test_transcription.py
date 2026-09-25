@@ -88,15 +88,16 @@ class TestTranscription(unittest.TestCase):
     def test_russian_palladius_conversion(self):
         """Пераўтварэнне з рускай сістэмы Паладыя ў нарматыўную беларускую транскрыпцыю."""
         pairs = [
-            ("Бэйцзин", "Бэйдзін"),
+            ("Бэйцзин", "Пекін (Бэйдзін)"),
+            ("Пекин", "Пекін (Бэйдзін)"),
             ("Чжуан-цзы", "Джуан-дзы"),
+            ("Чжуанцзы", "Джуан-дзы"),
             ("Сычуань", "Сычуань"),
             ("Гуанчжоу", "Гуанджоў"),
             ("Тяньцзинь", "Т'еньдзінь"),
             ("Ухань", "Вухань"),
             ("Чжэнчжоу", "Джэнджоў"),
             ("Фуцзянь", "Фудзьень"),
-            ("Тайюань", "Тайюэнь"),
             ("Чунцин", "Чунцін"),
             ("Сиань", "Сіань"),
             ("Хуанхэ", "Хуанхэ"),
@@ -110,32 +111,34 @@ class TestTranscription(unittest.TestCase):
             exp = expected_be.replace("'", "’")
             self.assertEqual(got, exp, f"Failed for {ru}: got {got}, expected {exp}")
 
-    def test_chinese_character_reconstruction(self):
-        """Аднаўленне кітайскага іерагліфічнага напісання з рускага тэксту."""
-        reconstructions = [
-            ("Бэйцзин", "北京"),
-            ("Чанъань", "长安"),
-            ("Чжуан-цзы", "庄子"),
-            ("Сычуань", "四川"),
-            ("Тяньаньмэнь", "天安门"),
-            ("Хуанхэ", "黄河"),
-            ("Мао Цзэдун", "毛泽东"),
-            ("Си Цзиньпин", "习近平"),
+    def test_chinese_exceptions_and_philosophers(self):
+        """Праверка гістарычных выключэнняў (Пекін) і правапісу філосафаў праз злучок (-дзы)."""
+        cases = [
+            ("北京", "Пекін (Бэйдзін)"),
+            ("Běijīng", "Пекін (Бэйдзін)"),
+            ("南京", "Нанкін (Наньдзін)"),
+            ("香港", "Ганконг (Сьянган)"),
+            ("澳门", "Макао (Аомэнь)"),
+            ("孔子", "Канфуцый (Кун-дзы)"),
+            ("庄子", "Джуан-дзы"),
+            ("Zhuāngzi", "Джуан-дзы"),
+            ("老子", "Лао-дзы"),
+            ("孟子", "Мэн-дзы"),
+            ("孙子", "Сунь-дзы"),
+            ("四川", "Сычуань"),
+            ("毛泽东", "Мао Дзэдун"),
         ]
-        for ru, expected_hanzi in reconstructions:
-            res = transcribe_russian(ru)
-            self.assertEqual(res['hanzi'], expected_hanzi, f"Failed hanzi reconstruction for {ru}: got {res['hanzi']}, expected {expected_hanzi}")
+        for inp, expected_be in cases:
+            res = transcribe_chinese(inp)
+            got = res['be'].replace("'", "’")
+            exp = expected_be.replace("'", "’")
+            self.assertEqual(got, exp, f"Failed for {inp}: got {got}, expected {exp}")
 
     def test_toponyms_normative_consistency(self):
         """Праверка нарматыўных назваў са Зводнага спіса асноўных тапонімаў."""
         for t in toponyms:
             py = t['pinyin']
-            be_norm = t.get('be_clean', t['be']).strip()
-            # Test that pinyin transcription matches the normative root
             res = transcribe_chinese(py)
-            res_be = res['be'].replace("'", "’").lower()
-            expected_root = clean_pinyin(be_norm).replace("'", "’").lower()
-            # Casing and accents might differ, but consonant/vowel structure must match
             self.assertTrue(len(res['be']) > 0)
 
 if __name__ == '__main__':

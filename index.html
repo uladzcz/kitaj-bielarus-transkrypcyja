@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кітайска-беларускі транскрыптар | Нарматыўная сістэма НАН Беларусі 2026</title>
-    <meta name="description" content="Дакладная афіцыйная практычная транскрыпцыя кітайскіх слоў на беларускую мову, а таксама перавод з рускай сістэмы Паладыя з аднаўленнем кітайскага напісання.">
+    <meta name="description" content="Дакладная афіцыйная практычная транскрыпцыя кітайскіх слоў на беларускую мову, а таксама перавод з рускай сістэмы Паладыя.">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,154 +16,70 @@
             </div>
             <h1>Кітайска-беларускі транскрыптар</h1>
             <p class="subtitle">
-                Дакладная транскрыпцыя кітайскіх слоў на беларускую мову і перавод з рускай сістэмы Паладыя з узнаўленнем іерогліфаў.
+                Дакладная практычная транскрыпцыя кітайскіх слоў і піньіня на беларускую мову, а таксама канвертацыя з рускай сістэмы Паладыя.
             </p>
         </header>
 
-        <!-- Main 2-way Mode Switcher -->
+        <!-- Main 2-way Mode Switcher (З кітайскай / З рускай) -->
         <div class="mode-switcher" role="tablist">
-            <button class="mode-btn active" data-mode="mode-zh" role="tab" aria-selected="true">
-                З кітайскай / піньіня ➔ на беларускую
+            <button class="mode-btn active" id="btn-mode-zh" data-mode="zh" role="tab" aria-selected="true">
+                З кітайскай
             </button>
-            <button class="mode-btn" data-mode="mode-ru" role="tab" aria-selected="false">
-                З сістэмы Паладыя ➔ на беларускую і кітайскую
+            <button class="mode-btn" id="btn-mode-ru" data-mode="ru" role="tab" aria-selected="false">
+                З рускай
             </button>
         </div>
 
-        <!-- MODE 1: Chinese / Pinyin -> Belarusian -->
-        <main id="mode-zh" class="mode-pane active" role="tabpanel">
-            <div class="card">
-                <h2 class="card-title">Транскрыпцыя з кітайскай мовы або піньіня</h2>
-                <p class="card-desc">Устаўце кітайскія іерогліфы (спрошчаныя ці традыцыйныя) або піньінь (з танальнымі знакамі ці без).</p>
+        <!-- Unified Single Converter Card (Never shifts or blinks) -->
+        <main class="card converter-card mode-zh" id="converter-card">
+            <div class="card-header-block">
+                <h2 class="card-title" id="card-title">Транскрыпцыя з кітайскай мовы</h2>
+                <p class="card-desc" id="card-desc">Устаўце кітайскія іерогліфы або піньінь.</p>
+            </div>
 
-                <!-- Presets -->
-                <div class="presets-bar">
-                    <span class="presets-label">Прыклады:</span>
-                    <button class="preset-btn" data-target="zh" data-text="北京">北京 (Бэйдзін / Пекін)</button>
-                    <button class="preset-btn" data-target="zh" data-text="长安">长安 (Чан’ань)</button>
-                    <button class="preset-btn" data-target="zh" data-text="庄子">庄子 (Джуан-дзы)</button>
-                    <button class="preset-btn" data-target="zh" data-text="四川">四川 (Сычуань)</button>
-                    <button class="preset-btn" data-target="zh" data-text="重庆">重庆 (Чунцін)</button>
-                    <button class="preset-btn" data-target="zh" data-text="黄河">黄河 (Хуанхэ)</button>
-                    <button class="preset-btn" data-target="zh" data-text="毛泽东">毛泽东 (Мао Дзэдун)</button>
-                    <button class="preset-btn" data-target="zh" data-text="你好，世界！">你好，世界！</button>
+            <!-- Presets Bar (Smooth in-place content) -->
+            <div class="presets-bar" id="presets-bar">
+                <span class="presets-label">Прыклады:</span>
+                <div class="presets-buttons-wrap" id="presets-buttons">
+                    <!-- Populated dynamically by JS for smooth transition -->
+                </div>
+            </div>
+
+            <!-- Single Input Field (Exact same coordinates on screen) -->
+            <div class="input-group">
+                <textarea id="main-input" class="textarea-field" placeholder="Устаўце кітайскі тэкст або піньінь, напрыклад: 北京, Cháng'ān, 庄子..." autofocus></textarea>
+            </div>
+
+            <!-- Results Section (Unified, smooth appearance) -->
+            <div id="result-section" class="result-section" style="display: none;">
+                <!-- Hero Belarusian Transcription Result -->
+                <div class="result-box-hero">
+                    <div class="result-header">
+                        <span class="result-badge">Беларуская нарматыўная транскрыпцыя (2026)</span>
+                        <button class="copy-btn" id="copy-btn-be" data-copy-target="out-be">
+                            Капіяваць
+                        </button>
+                    </div>
+                    <div id="out-be" class="hero-text"></div>
                 </div>
 
-                <!-- Input Field -->
-                <div class="input-group">
-                    <textarea id="zh-input" class="textarea-field" placeholder="Устаўце кітайскі тэкст або піньінь, напрыклад: 北京, Cháng'ān, 庄子..." autofocus></textarea>
-                </div>
-
-                <!-- Results -->
-                <div id="zh-result-card" class="result-section" style="display: none;">
-                    <!-- Hero Belarusian Result -->
-                    <div class="result-box-hero">
-                        <div class="result-header">
-                            <span class="result-badge">Беларуская нарматыўная транскрыпцыя (2026)</span>
-                            <button class="copy-btn" data-copy-target="zh-out-be">
-                                Капіяваць
-                            </button>
-                        </div>
-                        <div id="zh-out-be" class="hero-text"></div>
+                <!-- Secondary Info Grid -->
+                <div class="result-grid" id="secondary-grid">
+                    <div class="result-subcard" id="card-pinyin">
+                        <div class="subcard-label" id="label-pinyin">Піньінь (Pinyin)</div>
+                        <div id="out-py" class="subcard-content"></div>
                     </div>
-
-                    <!-- Secondary info grid -->
-                    <div class="result-grid">
-                        <div class="result-subcard">
-                            <div class="subcard-label">Піньінь (Pinyin)</div>
-                            <div id="zh-out-py" class="subcard-content"></div>
-                        </div>
-                        <div class="result-subcard">
-                            <div class="subcard-label">Руская транскрыпцыя (сістэма Паладыя)</div>
-                            <div id="zh-out-ru" class="subcard-content"></div>
-                        </div>
-                    </div>
-
-                    <!-- Syllable / Word Breakdown -->
-                    <div class="breakdown-area">
-                        <div class="subcard-label">Паскладовы разбор:</div>
-                        <div id="zh-out-breakdown" class="breakdown-chips"></div>
+                    <div class="result-subcard" id="card-paladius">
+                        <div class="subcard-label">Руская транскрыпцыя (сістэма Паладыя)</div>
+                        <div id="out-ru" class="subcard-content"></div>
                     </div>
                 </div>
+
+
             </div>
         </main>
 
-        <!-- MODE 2: Russian Palladius -> Belarusian + Reconstructed Chinese -->
-        <main id="mode-ru" class="mode-pane" role="tabpanel" style="display: none;">
-            <div class="card">
-                <h2 class="card-title">Канвертацыя з рускай транскрыпцыі (сістэмы Паладыя)</h2>
-                <p class="card-desc">Устаўце напісанне ў сістэме Паладыя (напрыклад: <em>Чжуан-цзы, Бэйцзин, Сычуань, Чанъань, Тяньаньмэнь, Си Цзиньпин</em>). Праграма створыць дакладную беларускую транскрыпцыю і адновіць кітайскія іерогліфы.</p>
-
-                <!-- Presets -->
-                <div class="presets-bar">
-                    <span class="presets-label">Прыклады:</span>
-                    <button class="preset-btn" data-target="ru" data-text="Бэйцзин">Бэйцзин</button>
-                    <button class="preset-btn" data-target="ru" data-text="Чанъань">Чанъань</button>
-                    <button class="preset-btn" data-target="ru" data-text="Чжуан-цзы">Чжуан-цзы</button>
-                    <button class="preset-btn" data-target="ru" data-text="Сычуань">Сычуань</button>
-                    <button class="preset-btn" data-target="ru" data-text="Тяньцзинь">Тяньцзинь</button>
-                    <button class="preset-btn" data-target="ru" data-text="Си Цзиньпин">Си Цзиньпин</button>
-                    <button class="preset-btn" data-target="ru" data-text="Тяньаньмэнь">Тяньаньмэнь</button>
-                    <button class="preset-btn" data-target="ru" data-text="Хуанхэ">Хуанхэ</button>
-                    <button class="preset-btn" data-target="ru" data-text="Пекин">Пекин (трад.)</button>
-                </div>
-
-                <!-- Input Field -->
-                <div class="input-group">
-                    <textarea id="ru-input" class="textarea-field" placeholder="Устаўце словы ў сістэме Паладыя, напрыклад: Чжуан-цзы, Бэйцзин, Чанъань..."></textarea>
-                </div>
-
-                <!-- Results -->
-                <div id="ru-result-card" class="result-section" style="display: none;">
-                    <!-- Hero Belarusian Result -->
-                    <div class="result-box-hero">
-                        <div class="result-header">
-                            <span class="result-badge">Беларуская нарматыўная транскрыпцыя (2026)</span>
-                            <button class="copy-btn" data-copy-target="ru-out-be">
-                                Капіяваць
-                            </button>
-                        </div>
-                        <div id="ru-out-be" class="hero-text"></div>
-                    </div>
-
-                    <!-- Reconstructed Chinese Hanzi Box -->
-                    <div class="reconstructed-box">
-                        <div class="result-header">
-                            <span class="result-badge" style="color: var(--accent);">Узноўленае кітайскае напісанне (іерогліфы)</span>
-                            <button class="copy-btn" data-copy-target="custom-hanzi-display">
-                                Капіяваць іерогліфы
-                            </button>
-                        </div>
-                        <div id="ru-out-zh-compound" style="margin-bottom: 8px;"></div>
-                        <div id="ru-out-zh-desc" class="card-desc" style="margin-bottom: 12px;"></div>
-
-                        <!-- Current composed characters banner -->
-                        <div class="custom-builder-banner">
-                            <div>
-                                <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Выбраныя іерогліфы:</span>
-                                <span id="custom-hanzi-display" class="custom-hanzi-text"></span>
-                            </div>
-                        </div>
-
-                        <!-- Interactive Syl Candidates Builder (Wrapped, No horizontal scroll) -->
-                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">
-                            Паскладовы выбар іерогліфаў-амафонаў (націсніце, каб змяніць варыянт):
-                        </div>
-                        <div id="ru-out-builder" class="builder-columns-container"></div>
-                    </div>
-
-                    <!-- Reconstructed Pinyin -->
-                    <div class="result-grid">
-                        <div class="result-subcard">
-                            <div class="subcard-label">Адноўлены піньінь (Pinyin)</div>
-                            <div id="ru-out-py" class="subcard-content"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- COLLAPSIBLE SECTION 1: Syllables Reference Table -->
+        <!-- Auxiliary Collapsible 1: Reference Syllables Table -->
         <details class="collapsible-card">
             <summary class="collapsible-header">
                 <span class="collapsible-title">Зводная нарматыўная табліца ўсіх 405 складоў</span>
@@ -228,7 +144,7 @@
             </div>
         </details>
 
-        <!-- COLLAPSIBLE SECTION 2: Rules and Orthography Guide -->
+        <!-- Auxiliary Collapsible 2: Rules and Orthography Guide -->
         <details class="collapsible-card">
             <summary class="collapsible-header">
                 <span class="collapsible-title">Правілы правапісу: разам, асобна, праз злучок і апостраф</span>

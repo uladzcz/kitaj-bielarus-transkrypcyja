@@ -1,5 +1,5 @@
 // Беларуская практычная транскрыпцыя кітайскай мовы (НАН Беларусі 2026)
-// Кліенцкі рухавік транскрыпцыі і інтэрактыўнай працы з іерогліфамі
+// Кліенцкі рухавік транскрыпцыі
 
 (function() {
     'use strict';
@@ -15,7 +15,6 @@
         ru_to_pinyin,
         toponyms,
         extra_words,
-        pinyin_to_chars,
         char_to_pinyin
     } = PINYIN_DATA;
 
@@ -41,12 +40,31 @@
 
     // Build compound word index from extra_words and toponyms
     const compoundWords = [];
+    const compoundByPinyin = {};
+    const compoundByRu = {};
+
+    function registerCompound(c) {
+        compoundWords.push(c);
+        if (c.pinyin) {
+            const cleanPy = cleanPinyin(c.pinyin).toLowerCase().replace(/[^a-z]/g, '');
+            if (cleanPy && !compoundByPinyin[cleanPy]) {
+                compoundByPinyin[cleanPy] = c;
+            }
+        }
+        if (c.ru) {
+            const cleanRu = c.ru.toLowerCase().replace(/[^а-яёіў]/g, '');
+            if (cleanRu && !compoundByRu[cleanRu]) {
+                compoundByRu[cleanRu] = c;
+            }
+        }
+    }
+
     if (extra_words) {
-        extra_words.forEach(w => compoundWords.push(w));
+        extra_words.forEach(w => registerCompound(w));
     }
     if (toponyms) {
         toponyms.forEach(t => {
-            compoundWords.push({
+            registerCompound({
                 hanzi: t.hanzi,
                 pinyin: t.pinyin,
                 be: t.be_clean || t.be,
@@ -164,10 +182,9 @@
         return resSyls;
     }
 
-    // Detect if character is Hanzi (CJK Unified Ideographs)
     function isHanzi(ch) {
         const code = ch.charCodeAt(0);
-        return (code >= 0x4E00 && code <= 0x9FFF) || 
+        return (code >= 0x4E00 && code <= 0x9FFF) ||
                (code >= 0x3400 && code <= 0x4DBF) ||
                (code >= 0x20000 && code <= 0x2A6DF) ||
                ch === '〇';
@@ -177,7 +194,6 @@
     function transcribeChinese(text) {
         if (!text || !text.trim()) return null;
 
-        // Check if text has Hanzi
         let hasHanzi = false;
         for (let i = 0; i < text.length; i++) {
             if (isHanzi(text[i])) {
@@ -186,13 +202,11 @@
             }
         }
 
-        const items = [];
         let fullBe = '';
         let fullPinyin = '';
         let fullRu = '';
 
         if (hasHanzi) {
-            // Check compound dictionary matches
             let pos = 0;
             while (pos < text.length) {
                 const ch = text[pos];
@@ -214,22 +228,17 @@
                 }
 
                 if (matchedCompound) {
-                    const pyClean = cleanPinyin(matchedCompound.pinyin);
-                    const syls = segmentPinyinWord(pyClean);
-                    const beWord = syllablesToBelarusian(syls);
-                    const ruWord = syls.map(s => pinyin_to_ru[s] || s).join('');
-                    
+                    const beWord = matchedCompound.be;
+                    const ruWord = matchedCompound.ru || '';
+
+                    if (fullBe && !/[\s\n\.,!?;:—\-\/]$/.test(fullBe) && !beWord.startsWith(' ')) {
+                        fullBe += ' ';
+                        fullRu += ' ';
+                    }
+
                     fullBe += beWord;
                     fullPinyin += (fullPinyin && !fullPinyin.endsWith(' ') ? ' ' : '') + matchedCompound.pinyin;
-                    fullRu += (fullRu && !fullRu.endsWith(' ') ? ' ' : '') + ruWord;
-
-                    items.push({
-                        hanzi: matchedCompound.hanzi,
-                        pinyin: matchedCompound.pinyin,
-                        be: beWord,
-                        ru: ruWord,
-                        desc: matchedCompound.desc || ''
-                    });
+                    fullRu += ruWord;
 
                     pos += matchedCompound.hanzi.length;
                     continue;
@@ -238,23 +247,23 @@
                 // Single character lookup
                 const rawPy = char_to_pinyin[ch] || '';
                 const cleanPy = cleanPinyin(rawPy);
-                const beChar = pinyin_to_be[cleanPy] || cleanPy || ch;
-                const ruChar = pinyin_to_ru[cleanPy] || cleanPy || ch;
+                let beChar = pinyin_to_be[cleanPy] || cleanPy || ch;
+                let ruChar = pinyin_to_ru[cleanPy] || cleanPy || ch;
+
+                const isWordStart = (pos === 0) || boolMatchPunct(fullBe);
+                if (isWordStart) {
+                    if (beChar.length > 0) beChar = beChar[0].toUpperCase() + beChar.slice(1);
+                    if (ruChar.length > 0) ruChar = ruChar[0].toUpperCase() + ruChar.slice(1);
+                }
 
                 fullBe += beChar;
                 fullPinyin += (fullPinyin && !fullPinyin.endsWith(' ') ? ' ' : '') + (rawPy || ch);
                 fullRu += ruChar;
 
-                items.push({
-                    hanzi: ch,
-                    pinyin: rawPy || cleanPy,
-                    be: beChar,
-                    ru: ruChar
-                });
                 pos++;
             }
         } else {
-            // Text is likely Pinyin
+            // Text is Pinyin
             const tokens = text.split(/([^\w'’]+)/);
             for (const tok of tokens) {
                 if (!tok || /^[^\w'’]+$/.test(tok)) {
@@ -265,27 +274,43 @@
                 }
 
                 const isCap = tok[0] === tok[0].toUpperCase() && tok[0].toLowerCase() !== tok[0].toUpperCase();
+                const cleanTok = cleanPinyin(tok).toLowerCase().replace(/[^a-z]/g, '');
+
+                // Check compound match by pinyin (e.g. zhuangzi, beijing, kongzi, etc.)
+                const compMatch = compoundByPinyin[cleanTok];
+                if (compMatch) {
+                    let beWord = compMatch.be;
+                    let ruWord = compMatch.ru || '';
+                    if (!isCap) {
+                        beWord = beWord.toLowerCase();
+                        ruWord = ruWord.toLowerCase();
+                    }
+                    fullBe += beWord;
+                    fullPinyin += tok;
+                    fullRu += ruWord;
+                    continue;
+                }
+
                 const syls = segmentPinyinWord(tok);
                 let beWord = syllablesToBelarusian(syls);
-                const ruWord = syls.map(s => pinyin_to_ru[s] || s).join('');
+                let ruWord = syls.map(s => pinyin_to_ru[s] || s).join('');
+
+                // Check philosopher suffix -zi / -zǐ
+                if (syls.length === 2 && (syls[1] === 'zi' || syls[1] === 'zǐ')) {
+                    const s0Be = pinyin_to_be[syls[0]] || syls[0];
+                    const s0Ru = pinyin_to_ru[syls[0]] || syls[0];
+                    beWord = `${s0Be}-дзы`;
+                    ruWord = `${s0Ru}-цзы`;
+                }
 
                 if (isCap && beWord.length > 0) {
                     beWord = beWord[0].toUpperCase() + beWord.slice(1);
+                    ruWord = ruWord[0].toUpperCase() + ruWord.slice(1);
                 }
 
                 fullBe += beWord;
                 fullPinyin += tok;
-                fullRu += isCap && ruWord.length > 0 ? ruWord[0].toUpperCase() + ruWord.slice(1) : ruWord;
-
-                syls.forEach(s => {
-                    const cands = pinyin_to_chars[s] || [];
-                    items.push({
-                        pinyin: s,
-                        be: pinyin_to_be[s] || s,
-                        ru: pinyin_to_ru[s] || s,
-                        candidates: cands.slice(0, 10)
-                    });
-                });
+                fullRu += ruWord;
             }
         }
 
@@ -293,105 +318,116 @@
             input: text,
             be: fullBe,
             pinyin: fullPinyin,
-            ru: fullRu,
-            items: items
+            ru: fullRu
         };
     }
 
-    // Convert Russian Palladius to Belarusian + Reconstructed Chinese
+    function boolMatchPunct(str) {
+        return Boolean(str && /[\s\n\.,!?;:—\-\/]$/.test(str));
+    }
+
+    // Convert Russian Palladius to Belarusian + Reconstructed Pinyin (NO character guessing!)
     function transcribeRussian(text) {
         if (!text || !text.trim()) return null;
 
-        const tradReplacements = [
-            { ru: 'пекин', normRu: 'бэйцзин', hanzi: '北京', pinyin: 'Běijīng', be: 'Бэйдзін' },
-            { ru: 'канфуцый', normRu: 'кунцзы', hanzi: '孔子', pinyin: 'Kǒngzǐ', be: 'Кун-дзы' },
-            { ru: 'гонконг', normRu: 'сянган', hanzi: '香港', pinyin: 'Xiānggǎng', be: 'Сьянган' },
-            { ru: 'макао', normRu: 'аомынь', hanzi: '澳门', pinyin: 'Àomén', be: 'Аомэнь' },
-            { ru: 'кунг-фу', normRu: 'гунфу', hanzi: '功夫', pinyin: 'Gōngfu', be: 'Гунфу' }
-        ];
+        const tradReplacements = {
+            'пекин': { be: 'Пекін (Бэйдзін)', pinyin: 'Běijīng' },
+            'бэйцзин': { be: 'Пекін (Бэйдзін)', pinyin: 'Běijīng' },
+            'конфуций': { be: 'Канфуцый (Кун-дзы)', pinyin: 'Kǒngzǐ' },
+            'канфуцый': { be: 'Канфуцый (Кун-дзы)', pinyin: 'Kǒngzǐ' },
+            'кун-цзы': { be: 'Канфуцый (Кун-дзы)', pinyin: 'Kǒngzǐ' },
+            'кунцзы': { be: 'Канфуцый (Кун-дзы)', pinyin: 'Kǒngzǐ' },
+            'гонконг': { be: 'Ганконг (Сьянган)', pinyin: 'Xiānggǎng' },
+            'сянган': { be: 'Ганконг (Сьянган)', pinyin: 'Xiānggǎng' },
+            'макао': { be: 'Макао (Аомэнь)', pinyin: 'Àomén' },
+            'макаа': { be: 'Макао (Аомэнь)', pinyin: 'Àomén' },
+            'аомынь': { be: 'Макао (Аомэнь)', pinyin: 'Àomén' },
+            'нанкин': { be: 'Нанкін (Наньдзін)', pinyin: 'Nánjīng' },
+            'наньцзин': { be: 'Нанкін (Наньдзін)', pinyin: 'Nánjīng' },
+            'янцзы': { be: 'рака Яндзы (Янцзы)', pinyin: 'Chángjiāng' },
+            'кунг-фу': { be: 'Гунфу', pinyin: 'Gōngfu' },
+            'чжуан-цзы': { be: 'Джуан-дзы', pinyin: 'Zhuāngzi' },
+            'чжуанцзы': { be: 'Джуан-дзы', pinyin: 'Zhuāngzi' },
+            'лао-цзы': { be: 'Лао-дзы', pinyin: 'Lǎozǐ' },
+            'лаоцзы': { be: 'Лао-дзы', pinyin: 'Lǎozǐ' },
+            'мэн-цзы': { be: 'Мэн-дзы', pinyin: 'Mèngzǐ' },
+            'мэнцзы': { be: 'Мэн-дзы', pinyin: 'Mèngzǐ' },
+            'сунь-цзы': { be: 'Сунь-дзы', pinyin: 'Sūnzǐ' },
+            'суньцзы': { be: 'Сунь-дзы', pinyin: 'Sūnzǐ' }
+        };
 
-        const tokens = text.split(/([^\p{L}]+)/u);
-        const sylsDetails = [];
+        const tokens = text.split(/([^\p{L}\-]+)/u);
         let fullBe = '';
         let fullPinyin = '';
-        let fullRu = '';
 
         for (const tok of tokens) {
             if (!tok || !/\p{L}/u.test(tok)) {
                 fullBe += tok;
                 fullPinyin += tok;
-                fullRu += tok;
                 continue;
             }
 
             const lower = tok.toLowerCase();
             const isCap = tok[0] === tok[0].toUpperCase() && tok[0].toLowerCase() !== tok[0].toUpperCase();
 
-            // Check if special traditional word
-            const special = tradReplacements.find(r => r.ru === lower);
-            if (special) {
-                fullBe += isCap ? special.be[0].toUpperCase() + special.be.slice(1) : special.be;
+            // Check traditional word
+            if (tradReplacements[lower]) {
+                const special = tradReplacements[lower];
+                let beW = special.be;
+                if (!isCap) beW = beW.toLowerCase();
+                fullBe += beW;
                 fullPinyin += (fullPinyin && !fullPinyin.endsWith(' ') ? ' ' : '') + special.pinyin;
-                fullRu += tok;
-
-                sylsDetails.push({
-                    ruSyl: tok,
-                    pySyl: cleanPinyin(special.pinyin),
-                    beSyl: special.be,
-                    reconstructedHanzi: special.hanzi,
-                    candidates: pinyin_to_chars[cleanPinyin(special.pinyin)] || []
-                });
                 continue;
             }
 
-            // Segment Russian word into Palladius syllables
-            const ruSyls = segmentRuWord(tok);
-            const pySyls = ruSyls.map(r => ru_to_pinyin[r] || r);
-            let beWord = syllablesToBelarusian(pySyls);
-
-            if (isCap && beWord.length > 0) {
-                beWord = beWord[0].toUpperCase() + beWord.slice(1);
+            // Check compound by Russian name
+            const cleanRu = lower.replace(/[^а-яёіў]/g, '');
+            if (compoundByRu[cleanRu]) {
+                const comp = compoundByRu[cleanRu];
+                let beW = comp.be;
+                if (!isCap) beW = beW.toLowerCase();
+                fullBe += beW;
+                fullPinyin += (fullPinyin && !fullPinyin.endsWith(' ') ? ' ' : '') + comp.pinyin;
+                continue;
             }
 
-            fullBe += beWord;
-            fullPinyin += (fullPinyin && !fullPinyin.endsWith(' ') ? ' ' : '') + pySyls.join(' ');
-            fullRu += tok;
+            // Handle hyphenated subwords (e.g. Чжуан-цзы)
+            const subtokens = tok.split('-');
+            const beSub = [];
+            const pySub = [];
+            for (const sub of subtokens) {
+                if (!sub) continue;
+                const subCap = sub[0] === sub[0].toUpperCase() && sub[0].toLowerCase() !== sub[0].toUpperCase();
+                const ruSyls = segmentRuWord(sub);
+                const pySyls = ruSyls.map(r => ru_to_pinyin[r] || r);
+                let beW = syllablesToBelarusian(pySyls);
 
-            // Reconstruct candidates for each syllable
-            ruSyls.forEach((r, idx) => {
-                const py = pySyls[idx];
-                const cands = pinyin_to_chars[py] || [];
-                sylsDetails.push({
-                    ruSyl: r,
-                    pySyl: py,
-                    beSyl: pinyin_to_be[py] || r,
-                    candidates: cands.slice(0, 14)
-                });
-            });
-        }
+                // Philosopher ending in цзы
+                if (ruSyls.length >= 2 && ruSyls[ruSyls.length - 1] === 'цзы') {
+                    const stemRu = ruSyls.slice(0, -1);
+                    const stemPy = stemRu.map(r => ru_to_pinyin[r] || r);
+                    const stemBe = syllablesToBelarusian(stemPy);
+                    beW = `${stemBe}-дзы`;
+                }
 
-        // Reconstruct whole Chinese word match
-        const cleanPySeq = sylsDetails.map(s => s.pySyl).join('');
-        let bestCompound = null;
-        for (const comp of compoundWords) {
-            const compPyClean = cleanPinyin(comp.pinyin).replace(/[^a-z]/g, '');
-            if (cleanPySeq === compPyClean || text.toLowerCase().replace(/[^а-яё]/g, '') === (comp.ru || '').toLowerCase().replace(/[^а-яё]/g, '')) {
-                bestCompound = comp;
-                break;
+                if (subCap && beW.length > 0) {
+                    beW = beW[0].toUpperCase() + beW.slice(1);
+                }
+                beSub.push(beW);
+                pySub.push(pySyls.join(' '));
             }
+            fullBe += beSub.join('-');
+            fullPinyin += (fullPinyin && !fullPinyin.endsWith(' ') ? ' ' : '') + pySub.join('-');
         }
 
         return {
             input: text,
             be: fullBe,
-            pinyin: fullPinyin,
-            ru: fullRu,
-            compound: bestCompound,
-            sylsDetails: sylsDetails
+            pinyin: fullPinyin
         };
     }
 
-    // Expose functions globally
+    // Expose engine
     window.TranscriptionEngine = {
         cleanPinyin,
         transcribeChinese,
@@ -400,245 +436,184 @@
         pinyin_to_ru,
         ru_to_pinyin,
         toponyms,
-        extra_words,
-        pinyin_to_chars
+        extra_words
     };
 
-    // UI Wire-up on DOMContentLoaded
+    // UI Configuration & State
+    let currentMode = 'zh'; // 'zh' or 'ru'
+
+    const PRESETS = {
+        zh: [
+            { label: '北京 (Пекін / Бэйдзін)', text: '北京' },
+            { label: '庄子 (Джуан-дзы)', text: '庄子' },
+            { label: '长安 (Чан’ань)', text: '长安' },
+            { label: '四川 (Сычуань)', text: '四川' },
+            { label: '重庆 (Чунцін)', text: '重庆' },
+            { label: '黄河 (Хуанхэ)', text: '黄河' },
+            { label: '毛泽东 (Мао Дзэдун)', text: '毛泽东' },
+            { label: '你好，世界！', text: '你好，世界！' }
+        ],
+        ru: [
+            { label: 'Пекин (Пекін / Бэйдзін)', text: 'Пекин' },
+            { label: 'Бэйцзин', text: 'Бэйцзин' },
+            { label: 'Чжуан-цзы', text: 'Чжуан-цзы' },
+            { label: 'Чанъань', text: 'Чанъань' },
+            { label: 'Сычуань', text: 'Сычуань' },
+            { label: 'Тяньцзинь', text: 'Тяньцзинь' },
+            { label: 'Си Цзиньпин', text: 'Си Цзиньпин' },
+            { label: 'Тяньаньмэнь', text: 'Тяньаньмэнь' }
+        ]
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         setupModeSwitcher();
-        setupChineseTranscriber();
-        setupRussianTranscriber();
-        setupTable();
-        setupPresets();
+        setupInputHandler();
         setupCopyButtons();
+        setupTable();
+        renderPresets();
     });
 
-    // 2-Way Mode Switcher
+    // Setup Mode Switcher (Seamless transition in the same card)
     function setupModeSwitcher() {
-        const modeBtns = document.querySelectorAll('.mode-btn');
-        const modePanes = document.querySelectorAll('.mode-pane');
+        const btnZh = document.getElementById('btn-mode-zh');
+        const btnRu = document.getElementById('btn-mode-ru');
+        const card = document.getElementById('converter-card');
+        const title = document.getElementById('card-title');
+        const desc = document.getElementById('card-desc');
+        const input = document.getElementById('main-input');
+        const cardPaladius = document.getElementById('card-paladius');
+        const labelPinyin = document.getElementById('label-pinyin');
 
-        modeBtns.forEach(btn => {
+        function switchMode(newMode) {
+            if (currentMode === newMode) return;
+            currentMode = newMode;
+
+            if (newMode === 'zh') {
+                btnZh.classList.add('active');
+                btnZh.setAttribute('aria-selected', 'true');
+                btnRu.classList.remove('active');
+                btnRu.setAttribute('aria-selected', 'false');
+
+                card.classList.remove('mode-ru');
+                card.classList.add('mode-zh');
+
+                title.textContent = 'Транскрыпцыя з кітайскай мовы';
+                desc.textContent = 'Устаўце кітайскія іерогліфы або піньінь.';
+                input.placeholder = 'Устаўце кітайскі тэкст або піньінь, напрыклад: 北京, Cháng\'ān, 庄子...';
+
+                labelPinyin.textContent = 'Піньінь (Pinyin)';
+                if (cardPaladius) cardPaladius.style.display = 'block';
+            } else {
+                btnRu.classList.add('active');
+                btnRu.setAttribute('aria-selected', 'true');
+                btnZh.classList.remove('active');
+                btnZh.setAttribute('aria-selected', 'false');
+
+                card.classList.remove('mode-zh');
+                card.classList.add('mode-ru');
+
+                title.textContent = 'Транскрыпцыя з сістэмы Паладыя';
+                desc.textContent = 'Устаўце словы ў рускай сістэме Паладыя.';
+                input.placeholder = 'Устаўце словы ў сістэме Паладыя, напрыклад: Чжуан-цзы, Бэйцзин, Чанъань...';
+
+                labelPinyin.textContent = 'Адноўлены піньінь (Pinyin)';
+                if (cardPaladius) cardPaladius.style.display = 'none';
+            }
+
+            renderPresets();
+            triggerUpdate();
+        }
+
+        if (btnZh) btnZh.addEventListener('click', () => switchMode('zh'));
+        if (btnRu) btnRu.addEventListener('click', () => switchMode('ru'));
+    }
+
+    // Render presets dynamically without moving elements
+    function renderPresets() {
+        const container = document.getElementById('presets-buttons');
+        if (!container) return;
+
+        container.innerHTML = '';
+        const list = PRESETS[currentMode] || [];
+
+        list.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'preset-btn';
+            btn.textContent = p.label;
             btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-mode');
-                modeBtns.forEach(b => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-selected', 'false');
-                });
-                modePanes.forEach(p => {
-                    p.classList.remove('active');
-                    p.style.display = 'none';
-                });
-
-                btn.classList.add('active');
-                btn.setAttribute('aria-selected', 'true');
-                const targetPane = document.getElementById(targetId);
-                if (targetPane) {
-                    targetPane.classList.add('active');
-                    targetPane.style.display = 'block';
+                const input = document.getElementById('main-input');
+                if (input) {
+                    input.value = p.text;
+                    triggerUpdate();
+                    input.focus();
                 }
             });
+            container.appendChild(btn);
         });
     }
 
-    // Chinese -> Belarusian Transcriber
-    function setupChineseTranscriber() {
-        const input = document.getElementById('zh-input');
-        const outBe = document.getElementById('zh-out-be');
-        const outPy = document.getElementById('zh-out-py');
-        const outRu = document.getElementById('zh-out-ru');
-        const outBreakdown = document.getElementById('zh-out-breakdown');
-        const resultCard = document.getElementById('zh-result-card');
+    // Input & Transcription Update Handler
+    function setupInputHandler() {
+        const input = document.getElementById('main-input');
+        if (input) {
+            input.addEventListener('input', triggerUpdate);
+        }
+    }
 
-        function update() {
-            const val = input.value.trim();
-            if (!val) {
-                if (resultCard) resultCard.style.display = 'none';
-                return;
-            }
+    function triggerUpdate() {
+        const input = document.getElementById('main-input');
+        const resultSection = document.getElementById('result-section');
+        const outBe = document.getElementById('out-be');
+        const outPy = document.getElementById('out-py');
+        const outRu = document.getElementById('out-ru');
 
+        if (!input) return;
+        const val = input.value.trim();
+
+        if (!val) {
+            if (resultSection) resultSection.style.display = 'none';
+            return;
+        }
+
+        if (currentMode === 'zh') {
             const res = transcribeChinese(val);
             if (!res) return;
 
-            if (resultCard) resultCard.style.display = 'block';
+            if (resultSection) resultSection.style.display = 'block';
             if (outBe) outBe.textContent = res.be;
             if (outPy) outPy.textContent = res.pinyin;
             if (outRu) outRu.textContent = res.ru;
-
-            if (outBreakdown) {
-                outBreakdown.innerHTML = '';
-                res.items.forEach(item => {
-                    const chip = document.createElement('div');
-                    chip.className = 'syl-chip';
-                    chip.innerHTML = `
-                        <div class="chip-main">${item.hanzi || item.pinyin}</div>
-                        <div class="chip-sub be">${item.be}</div>
-                        <div class="chip-sub py">${item.pinyin || ''}</div>
-                        ${item.desc ? `<div class="chip-desc">${item.desc}</div>` : ''}
-                    `;
-                    outBreakdown.appendChild(chip);
-                });
-            }
-        }
-
-        if (input) {
-            input.addEventListener('input', update);
-            if (input.value) update();
-        }
-    }
-
-    // Russian Palladius -> Belarusian + Reconstructed Chinese
-    function setupRussianTranscriber() {
-        const input = document.getElementById('ru-input');
-        const outBe = document.getElementById('ru-out-be');
-        const outPy = document.getElementById('ru-out-py');
-        const outZhCompound = document.getElementById('ru-out-zh-compound');
-        const outZhCompoundDesc = document.getElementById('ru-out-zh-desc');
-        const outBuilder = document.getElementById('ru-out-builder');
-        const customHanziDisplay = document.getElementById('custom-hanzi-display');
-        const resultCard = document.getElementById('ru-result-card');
-
-        function update() {
-            const val = input.value.trim();
-            if (!val) {
-                if (resultCard) resultCard.style.display = 'none';
-                return;
-            }
-
+        } else {
+            // Mode: 'ru' (Palladius -> Belarusian + Pinyin ONLY)
             const res = transcribeRussian(val);
             if (!res) return;
 
-            if (resultCard) resultCard.style.display = 'block';
+            if (resultSection) resultSection.style.display = 'block';
             if (outBe) outBe.textContent = res.be;
             if (outPy) outPy.textContent = res.pinyin;
-
-            // Compound match
-            if (res.compound) {
-                if (outZhCompound) {
-                    outZhCompound.innerHTML = `<span class="big-hanzi">${res.compound.hanzi}</span> <span class="badge-match">Дакладнае супадзенне</span>`;
-                }
-                if (outZhCompoundDesc) {
-                    outZhCompoundDesc.textContent = `${res.compound.desc || ''} (${res.compound.pinyin})`;
-                }
-            } else {
-                const composed = res.sylsDetails.map(s => s.candidates && s.candidates.length > 0 ? s.candidates[0].char : '').join('');
-                if (outZhCompound) {
-                    outZhCompound.innerHTML = `<span class="big-hanzi">${composed}</span> <span class="badge-cand">Адноўлена па складах</span>`;
-                }
-                if (outZhCompoundDesc) {
-                    outZhCompoundDesc.textContent = 'Выберыце патрэбныя іерогліфы ніжэй, калі патрабуецца іншы варыянт:';
-                }
-            }
-
-            // Interactive character candidates builder (Wrapped, No horizontal scroll)
-            if (outBuilder) {
-                outBuilder.innerHTML = '';
-                const selectedChars = [];
-
-                res.sylsDetails.forEach((sylInfo, sylIndex) => {
-                    const group = document.createElement('div');
-                    group.className = 'builder-column';
-
-                    const header = document.createElement('div');
-                    header.className = 'builder-col-header';
-                    header.innerHTML = `<strong>${sylInfo.ruSyl}</strong> <span>${sylInfo.beSyl}</span> <small>(${sylInfo.pySyl})</small>`;
-                    group.appendChild(header);
-
-                    const candList = document.createElement('div');
-                    candList.className = 'builder-cand-list';
-
-                    const candidates = sylInfo.candidates || [];
-                    if (candidates.length === 0) {
-                        candList.innerHTML = '<span class="text-muted">—</span>';
-                    } else {
-                        selectedChars[sylIndex] = candidates[0].char;
-
-                        candidates.forEach((cand, candIndex) => {
-                            const btn = document.createElement('button');
-                            btn.className = 'cand-btn' + (candIndex === 0 ? ' selected' : '');
-                            btn.innerHTML = `<span class="cand-char">${cand.char}</span> <span class="cand-py">${cand.pinyin}</span>`;
-                            btn.title = `Іерогліф ${cand.char} (${cand.pinyin})`;
-
-                            btn.addEventListener('click', () => {
-                                group.querySelectorAll('.cand-btn').forEach(b => b.classList.remove('selected'));
-                                btn.classList.add('selected');
-                                selectedChars[sylIndex] = cand.char;
-                                if (customHanziDisplay) {
-                                    customHanziDisplay.textContent = selectedChars.join('');
-                                }
-                            });
-
-                            candList.appendChild(btn);
-                        });
-                    }
-
-                    group.appendChild(candList);
-                    outBuilder.appendChild(group);
-                });
-
-                if (customHanziDisplay) {
-                    customHanziDisplay.textContent = selectedChars.join('');
-                }
-            }
         }
-
-        if (input) {
-            input.addEventListener('input', update);
-            if (input.value) update();
-        }
-    }
-
-    // Presets & Examples
-    function setupPresets() {
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const text = btn.getAttribute('data-text');
-                const target = btn.getAttribute('data-target');
-
-                if (target === 'zh') {
-                    const modeZhBtn = document.querySelector('[data-mode="mode-zh"]');
-                    if (modeZhBtn) modeZhBtn.click();
-                    const zhInput = document.getElementById('zh-input');
-                    if (zhInput) {
-                        zhInput.value = text;
-                        zhInput.dispatchEvent(new Event('input'));
-                        zhInput.focus();
-                    }
-                } else if (target === 'ru') {
-                    const modeRuBtn = document.querySelector('[data-mode="mode-ru"]');
-                    if (modeRuBtn) modeRuBtn.click();
-                    const ruInput = document.getElementById('ru-input');
-                    if (ruInput) {
-                        ruInput.value = text;
-                        ruInput.dispatchEvent(new Event('input'));
-                        ruInput.focus();
-                    }
-                }
-            });
-        });
     }
 
     // Copy to clipboard
     function setupCopyButtons() {
-        document.querySelectorAll('.copy-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-copy-target');
-                const targetElem = document.getElementById(targetId);
-                if (!targetElem) return;
+        const copyBtn = document.getElementById('copy-btn-be');
+        if (!copyBtn) return;
 
-                const textToCopy = targetElem.textContent.trim();
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    const origHtml = btn.innerHTML;
-                    btn.innerHTML = 'Скапіявана!';
-                    btn.classList.add('copied');
-                    setTimeout(() => {
-                        btn.innerHTML = origHtml;
-                        btn.classList.remove('copied');
-                    }, 1800);
-                }).catch(err => {
-                    console.error('Памылка капіявання:', err);
-                });
+        copyBtn.addEventListener('click', () => {
+            const outBe = document.getElementById('out-be');
+            if (!outBe) return;
+
+            const textToCopy = outBe.textContent.trim();
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const origText = copyBtn.textContent;
+                copyBtn.textContent = 'Скапіявана!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = origText;
+                    copyBtn.classList.remove('copied');
+                }, 1600);
+            }).catch(err => {
+                console.error('Памылка капіявання:', err);
             });
         });
     }
@@ -658,8 +633,7 @@
         pinyinKeys.forEach(py => {
             const be = pinyin_to_be[py];
             const ru = pinyin_to_ru[py] || '—';
-            const chars = (pinyin_to_chars[py] || []).slice(0, 5).map(c => c.char).join(' ');
-            allSyllables.push({ py, be, ru, chars });
+            allSyllables.push({ py, be, ru });
         });
 
         let currentFilter = 'all';
@@ -680,7 +654,7 @@
 
                 if (searchQuery) {
                     const q = searchQuery.toLowerCase();
-                    const match = s.py.includes(q) || s.be.includes(q) || s.ru.includes(q) || s.chars.includes(q);
+                    const match = s.py.includes(q) || s.be.includes(q) || s.ru.includes(q);
                     if (!match) return;
                 }
 
@@ -690,7 +664,7 @@
                     <td><strong>${s.py}</strong></td>
                     <td class="be-highlight"><strong>${s.be}</strong></td>
                     <td class="ru-cell">${s.ru}</td>
-                    <td class="chars-cell">${s.chars || '—'}</td>
+                    <td class="chars-cell">—</td>
                 `;
                 tableBody.appendChild(tr);
             });
