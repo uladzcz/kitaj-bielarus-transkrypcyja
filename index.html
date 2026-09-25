@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кітайска-беларускі транскрыптар | Нарматыўная сістэма НАН Беларусі 2026</title>
+    <meta name="description" content="Дакладная афіцыйная практычная транскрыпцыя кітайскіх слоў (іерогліфаў і піньіня) на беларускую мову, а таксама перавод з рускай сістэмы Паладыя з аднаўленнем кітайскага напісання.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo-badge">
+                <span>🇧🇾</span> Нарматыўная база НАН Беларусі (2026)
+            </div>
+            <h1>Кітайска-беларускі транскрыптар</h1>
+            <p class="subtitle">
+                Дакладная транскрыпцыя кітайскіх слоў і піньіня на беларускую мову, а таксама канвертацыя з рускай паладыцы з узнаўленнем кітайскага напісання.
+            </p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav" role="tablist">
+            <button class="tab-btn active" data-tab="tab-zh" role="tab" aria-selected="true">
+                <span>🇨🇳</span> Кітайскія словы / Піньінь ➔ Беларуская
+            </button>
+            <button class="tab-btn" data-tab="tab-ru" role="tab" aria-selected="false">
+                <span>📜</span> Руская паладыца ➔ Беларуская + Іерогліфы
+            </button>
+            <button class="tab-btn" data-tab="tab-table" role="tab" aria-selected="false">
+                <span>📖</span> Зводная табліца складоў
+            </button>
+            <button class="tab-btn" data-tab="tab-about" role="tab" aria-selected="false">
+                <span>ℹ️</span> Правілы і даведка
+            </button>
+        </nav>
+
+        <!-- TAB 1: Chinese / Pinyin -> Belarusian -->
+        <section id="tab-zh" class="tab-pane active" role="tabpanel">
+            <div class="card">
+                <h2 class="card-title">Перадача кітайскіх слоў або піньіня на беларускую</h2>
+                <p class="card-desc">Устаўце кітайскія іерогліфы (спрошчаныя ці традыцыйныя) або піньінь (з танальнымі знакамі ці без).</p>
+
+                <!-- Presets -->
+                <div class="presets-bar">
+                    <span class="presets-label">Прыклады:</span>
+                    <button class="preset-btn" data-target="zh" data-text="北京">北京 (Бэйдзін)</button>
+                    <button class="preset-btn" data-target="zh" data-text="长安">长安 (Чан’ань)</button>
+                    <button class="preset-btn" data-target="zh" data-text="庄子">庄子 (Джуан-дзы)</button>
+                    <button class="preset-btn" data-target="zh" data-text="四川">四川 (Сычуань)</button>
+                    <button class="preset-btn" data-target="zh" data-text="重庆">重庆 (Чунцін)</button>
+                    <button class="preset-btn" data-target="zh" data-text="黄河">黄河 (Хуанхэ)</button>
+                    <button class="preset-btn" data-target="zh" data-text="毛泽东">毛泽东 (Мао Дзэдун)</button>
+                    <button class="preset-btn" data-target="zh" data-text="你好，世界！">你好，世界！</button>
+                </div>
+
+                <!-- Input Field -->
+                <div class="input-group">
+                    <textarea id="zh-input" class="textarea-field" placeholder="Устаўце кітайскі тэкст або піньінь, напрыклад: 北京, Cháng'ān, 庄子..." autofocus></textarea>
+                </div>
+
+                <!-- Results -->
+                <div id="zh-result-card" class="result-section" style="display: none;">
+                    <!-- Hero Belarusian Result -->
+                    <div class="result-box-hero">
+                        <div class="result-header">
+                            <span class="result-badge">🇧🇾 Беларуская нарматыўная транскрыпцыя (2026)</span>
+                            <button class="copy-btn" data-copy-target="zh-out-be">
+                                <span>📋</span> Капіяваць
+                            </button>
+                        </div>
+                        <div id="zh-out-be" class="hero-text"></div>
+                    </div>
+
+                    <!-- Secondary info grid -->
+                    <div class="result-grid">
+                        <div class="result-subcard">
+                            <div class="subcard-label">🇨🇳 Піньінь (Pinyin)</div>
+                            <div id="zh-out-py" class="subcard-content"></div>
+                        </div>
+                        <div class="result-subcard">
+                            <div class="subcard-label">📜 Традыцыйная руская паладыца</div>
+                            <div id="zh-out-ru" class="subcard-content"></div>
+                        </div>
+                    </div>
+
+                    <!-- Syllable / Word Breakdown -->
+                    <div class="breakdown-area">
+                        <div class="subcard-label">🔍 Паскладовы разбор:</div>
+                        <div id="zh-out-breakdown" class="breakdown-chips"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Russian Palladius -> Belarusian + Reconstructed Chinese -->
+        <section id="tab-ru" class="tab-pane" role="tabpanel">
+            <div class="card">
+                <h2 class="card-title">Канвертацыя з рускай транскрыпцыі (сістэмы Паладыя)</h2>
+                <p class="card-desc">Устаўце рускае напісанне (напрыклад, <em>Чжуан-цзы, Бэйцзин, Сычуань, Чанъань, Тяньаньмэнь</em>). Сістэма створыць дакладную беларускую транскрыпцыю і адновіць кітайскія іерогліфы.</p>
+
+                <!-- Presets -->
+                <div class="presets-bar">
+                    <span class="presets-label">Прыклады:</span>
+                    <button class="preset-btn" data-target="ru" data-text="Бэйцзин">Бэйцзин</button>
+                    <button class="preset-btn" data-target="ru" data-text="Чанъань">Чанъань</button>
+                    <button class="preset-btn" data-target="ru" data-text="Чжуан-цзы">Чжуан-цзы</button>
+                    <button class="preset-btn" data-target="ru" data-text="Сычуань">Сычуань</button>
+                    <button class="preset-btn" data-target="ru" data-text="Тяньцзинь">Тяньцзинь</button>
+                    <button class="preset-btn" data-target="ru" data-text="Си Цзиньпин">Си Цзиньпин</button>
+                    <button class="preset-btn" data-target="ru" data-text="Тяньаньмэнь">Тяньаньмэнь</button>
+                    <button class="preset-btn" data-target="ru" data-text="Хуанхэ">Хуанхэ</button>
+                    <button class="preset-btn" data-target="ru" data-text="Пекин">Пекин (трад.)</button>
+                </div>
+
+                <!-- Input Field -->
+                <div class="input-group">
+                    <textarea id="ru-input" class="textarea-field" placeholder="Устаўце словы ў сістэме Паладыя, напрыклад: Чжуан-цзы, Бэйцзин, Чанъань..."></textarea>
+                </div>
+
+                <!-- Results -->
+                <div id="ru-result-card" class="result-section" style="display: none;">
+                    <!-- Hero Belarusian Result -->
+                    <div class="result-box-hero">
+                        <div class="result-header">
+                            <span class="result-badge">🇧🇾 Беларуская нарматыўная транскрыпцыя (2026)</span>
+                            <button class="copy-btn" data-copy-target="ru-out-be">
+                                <span>📋</span> Капіяваць
+                            </button>
+                        </div>
+                        <div id="ru-out-be" class="hero-text"></div>
+                    </div>
+
+                    <!-- Reconstructed Chinese Hanzi Box -->
+                    <div class="reconstructed-box">
+                        <div class="result-header">
+                            <span class="result-badge" style="color: var(--accent);">🀄 Узноўленае кітайскае напісанне (Іерогліфы)</span>
+                            <button class="copy-btn" data-copy-target="custom-hanzi-display">
+                                <span>📋</span> Капіяваць іерогліфы
+                            </button>
+                        </div>
+                        <div id="ru-out-zh-compound" style="margin-bottom: 8px;"></div>
+                        <div id="ru-out-zh-desc" class="card-desc" style="margin-bottom: 12px;"></div>
+
+                        <!-- Current composed characters banner -->
+                        <div class="custom-builder-banner">
+                            <div>
+                                <span style="font-size: 0.85rem; color: var(--text-muted); display: block;">Выбраныя іерогліфы:</span>
+                                <span id="custom-hanzi-display" class="custom-hanzi-text"></span>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Syl Candidates Builder -->
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">
+                            Канструктар іерогліфаў па складах (клікніце на патрэбны іерогліф, каб змяніць):
+                        </div>
+                        <div id="ru-out-builder" class="builder-columns-container"></div>
+                    </div>
+
+                    <!-- Reconstructed Pinyin -->
+                    <div class="result-grid">
+                        <div class="result-subcard">
+                            <div class="subcard-label">🇨🇳 Адноўлены піньінь (Pinyin)</div>
+                            <div id="ru-out-py" class="subcard-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: Syllables Reference Table -->
+        <section id="tab-table" class="tab-pane" role="tabpanel">
+            <div class="card">
+                <h2 class="card-title">Нарматыўная табліца транскрыпцыі кітайскіх складоў</h2>
+                <p class="card-desc">Поўная табліца 405 нарматыўных складоў з супастаўленнем піньіня, беларускай і рускай транскрыпцый.</p>
+
+                <!-- Search and Filters -->
+                <div class="table-toolbar">
+                    <input type="text" id="table-search" class="search-input" placeholder="Пошук па складзе (напрыклад: zhang, джан, чжан, bei, і г.д.)...">
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">
+                        Знойдзена складоў: <strong id="table-count" style="color: var(--text-main);">0</strong>
+                    </div>
+                </div>
+
+                <!-- Initial Filter Pills -->
+                <div class="filter-pills-bar">
+                    <button class="filter-pill active" data-filter="all">Усе</button>
+                    <button class="filter-pill" data-filter="vowel">Галосныя (A, E, O)</button>
+                    <button class="filter-pill" data-filter="b">B</button>
+                    <button class="filter-pill" data-filter="p">P</button>
+                    <button class="filter-pill" data-filter="m">M</button>
+                    <button class="filter-pill" data-filter="f">F</button>
+                    <button class="filter-pill" data-filter="d">D</button>
+                    <button class="filter-pill" data-filter="t">T</button>
+                    <button class="filter-pill" data-filter="n">N</button>
+                    <button class="filter-pill" data-filter="l">L</button>
+                    <button class="filter-pill" data-filter="g">G</button>
+                    <button class="filter-pill" data-filter="k">K</button>
+                    <button class="filter-pill" data-filter="h">H</button>
+                    <button class="filter-pill" data-filter="j">J</button>
+                    <button class="filter-pill" data-filter="q">Q</button>
+                    <button class="filter-pill" data-filter="x">X</button>
+                    <button class="filter-pill" data-filter="zh">ZH</button>
+                    <button class="filter-pill" data-filter="ch">CH</button>
+                    <button class="filter-pill" data-filter="sh">SH</button>
+                    <button class="filter-pill" data-filter="r">R</button>
+                    <button class="filter-pill" data-filter="z">Z</button>
+                    <button class="filter-pill" data-filter="c">C</button>
+                    <button class="filter-pill" data-filter="s">S</button>
+                    <button class="filter-pill" data-filter="w">W</button>
+                    <button class="filter-pill" data-filter="y">Y</button>
+                </div>
+
+                <!-- Table -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Піньінь (Pinyin)</th>
+                                <th>Беларуская (Норма 2026)</th>
+                                <th>Паладыца (Руская)</th>
+                                <th>Частыя іерогліфы</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: Rules and About -->
+        <section id="tab-about" class="tab-pane" role="tabpanel">
+            <div class="card info-content">
+                <h2 class="card-title">Пра Беларускую практычную транскрыпцыю кітайскай мовы</h2>
+                <p>
+                    <strong>Беларуская практычная транскрыпцыя кітайскай мовы</strong> — афіцыйная нарматыўная сістэма перадачы кітайскіх складоў (піньінь) сродкамі беларускай мовы, ухваленая Вучоным саветам Цэнтра даследаванняў беларускай культуры, мовы і літаратуры НАН Беларусі і Саветам РІКК БДУ (2025—2026 гг.).
+                </p>
+
+                <h3>Асноўныя адрозненні ад рускай сістэмы Паладыя</h3>
+                <ul>
+                    <li><code>zh</code> перадаецца як <strong>дж</strong> (<em>zhang</em> — <strong>джан</strong>, <em>zhi</em> — <strong>джы</strong>; замест рускага <em>чжан</em>, <em>чжи</em>).</li>
+                    <li><code>z</code> перадаецца як <strong>дз</strong> (<em>zi</em> — <strong>дзы</strong>, <em>za</em> — <strong>дза</strong>; замест рускага <em>цзы</em>).</li>
+                    <li><code>j</code> перадаецца як <strong>дзі</strong> / <strong>дзь</strong> (<em>ji</em> — <strong>дзі</strong>, <em>jie</em> — <strong>дзье</strong>; замест рускага <em>цзи</em>, <em>цзе</em>).</li>
+                    <li><code>q</code> перадаецца як <strong>ці</strong> / <strong>ць</strong> (<em>qi</em> — <strong>ці</strong>, <em>qian</em> — <strong>цьень</strong>; замест рускага <em>ци</em>, <em>цянь</em>).</li>
+                    <li><code>x</code> перадаецца як <strong>сі</strong> / <strong>сь</strong> (<em>xi</em> — <strong>сі</strong>, <em>xian</em> — <strong>сьень</strong>; замест рускага <em>си</em>, <em>сянь</em>).</li>
+                    <li><code>d</code> і <code>t</code> перад <code>i</code> захоўваюць цвёрдасць: <em>di</em> — <strong>ды</strong>, <em>ti</em> — <strong>ты</strong>, <em>ding</em> — <strong>дын</strong>.</li>
+                    <li>Фіналь <code>-ian</code> перадаецца праз <strong>-ень</strong> з мяккім знакам ці апострафам: <em>tian</em> — <strong>т'ень</strong>, <em>jian</em> — <strong>дзьень</strong>.</li>
+                    <li>Дыфтонгі <code>-ou</code> / <code>-iu</code> перадаюцца з літарай <strong>ў</strong>: <em>zhou</em> — <strong>джоў</strong>, <em>you</em> — <strong>ёў</strong>, <em>liu</em> — <strong>льёў</strong>.</li>
+                    <li>Фіналь <code>-uo</code> перадаецца як <strong>-уо</strong> (<em>shuo</em> — <strong>шуо</strong>, <em>guo</em> — <strong>гуо</strong>).</li>
+                    <li>Склад <code>wu</code> перадаецца як <strong>ву</strong> (<em>Wuhan</em> — <strong>Вухань</strong>).</li>
+                </ul>
+
+                <div class="rule-highlight">
+                    <strong>Правіла стыку складоў:</strong><br>
+                    Калі першы склад заканчваецца на літару <strong>-н</strong> (<em>-n</em>), а наступны пачынаецца на галосную (<em>a, e, o, u, i</em>), паміж імі абавязкова ставіцца <strong>апостраф</strong>.<br>
+                    <em>Прыклад:</em> 长安 (Chang'an) — <strong>Чан’ань</strong>; 天安门 (Tian'anmen) — <strong>Т’еньаньмэнь</strong>.
+                </div>
+
+                <h3>Крыніцы і спасылкі</h3>
+                <ul>
+                    <li><a href="https://be.wikipedia.org/wiki/Беларуская_практычная_транскрыпцыя_кітайскай_мовы" target="_blank" rel="noopener">Беларуская практычная транскрыпцыя кітайскай мовы (Вікіпедыя)</a></li>
+                    <li><a href="https://be.wikipedia.org/wiki/Беларуская_практычная_транскрыпцыя_кітайскай_мовы/Зводны_спіс_асноўных_кітайскіх_тапонімаў" target="_blank" rel="noopener">Зводны спіс асноўных кітайскіх тапонімаў</a></li>
+                    <li><a href="https://ru.wikipedia.org/wiki/Транскрипционная_система_Палладия" target="_blank" rel="noopener">Транскрипционная система Палладия (Вікіпедыя)</a></li>
+                    <li>Баравік М. А. і інш. <em>Кітайска-беларускі слоўнік</em>. — Мінск: Калорград, 2026. — 965 с.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- GitHub Deploy Notice -->
+        <div class="github-banner">
+            <div class="github-banner-text">
+                <strong>🐙 Публікацыя на GitHub Pages:</strong> Старонка цалкам аўтаномная і гатовая да размяшчэння на вашым GitHub.
+            </div>
+            <a href="https://github.com" target="_blank" rel="noopener" class="github-banner-link">
+                <span>Адкрыць GitHub</span> ➔
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>
+                Кітайска-беларускі транскрыптар © 2026. Створана на аснове нарматыўнай базы НАН Беларусі і РІКК БДУ.
+            </p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="pinyin_data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
