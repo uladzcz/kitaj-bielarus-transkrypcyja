@@ -34,13 +34,32 @@ pinyin_to_chars = DATA["pinyin_to_chars"]
 
 BE_VOWELS = set('аеёіоуыэюяАЕЁІОУЫЭЮЯ')
 
+import unicodedata
+
+PINYIN_TONE_MAP = {
+    'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
+    'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e', 'ê': 'e', 'ế': 'e', 'ề': 'e',
+    'ī': 'i', 'í': 'i', 'ǐ': 'i', 'ì': 'i',
+    'ō': 'o', 'ó': 'o', 'ǒ': 'o', 'ò': 'o',
+    'ū': 'u', 'ú': 'u', 'ǔ': 'u', 'ù': 'u',
+    'ǖ': 'ü', 'ǘ': 'ü', 'ǚ': 'ü', 'ǜ': 'ü', 'ü': 'ü', 'v': 'ü',
+    'Ā': 'a', 'Á': 'a', 'Ǎ': 'a', 'À': 'a',
+    'Ē': 'e', 'É': 'e', 'Ě': 'e', 'È': 'e',
+    'Ī': 'i', 'Í': 'i', 'Ǐ': 'i', 'Ì': 'i',
+    'Ō': 'o', 'Ó': 'o', 'Ǒ': 'o', 'Ò': 'o',
+    'Ū': 'u', 'Ú': 'u', 'Ǔ': 'u', 'Ù': 'u',
+    'Ǖ': 'ü', 'Ǘ': 'ü', 'Ǚ': 'ü', 'Ǜ': 'ü', 'Ü': 'ü', 'V': 'ü'
+}
+
 def clean_pinyin(py):
     if not py:
         return ""
-    from_chars = 'āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü'
-    to_chars   = 'aaaaeeeeiiiioooouuuuuuuuu'
-    table = str.maketrans(from_chars, to_chars)
-    return py.translate(table).lower()
+    res = ''.join(PINYIN_TONE_MAP.get(c, c.lower()) for c in py)
+    decomposed = unicodedata.normalize('NFD', res)
+    stripped = re.sub(r'[\u0300\u0301\u0304\u030c]', '', decomposed)
+    cleaned = unicodedata.normalize('NFC', stripped)
+    cleaned = re.sub(r'[1-5]', '', cleaned)
+    return cleaned
 
 sorted_pinyin = sorted(pinyin_to_be.keys(), key=lambda s: len(s), reverse=True)
 sorted_ru = sorted(ru_to_pinyin.keys(), key=lambda s: len(s), reverse=True)
@@ -53,7 +72,7 @@ compound_by_ru = {}
 def register_compound(c):
     compounds.append(c)
     if 'pinyin' in c and c['pinyin']:
-        clean_py = re.sub(r'[^a-z]', '', clean_pinyin(c['pinyin']))
+        clean_py = re.sub(r'[^a-zü0-9]', '', clean_pinyin(c['pinyin']))
         if clean_py and clean_py not in compound_by_pinyin:
             compound_by_pinyin[clean_py] = c
     if 'ru' in c and c['ru']:
@@ -211,16 +230,38 @@ def transcribe_chinese(text):
         }
     else:
         # Pinyin
-        tokens = re.split(r"([^\w'’]+)", text)
+        tokens = re.split(r"([^\w'’\-]+)", text)
         full_be = []
         full_ru = []
         for tok in tokens:
-            if not tok or re.match(r"^[^\w'’]+$", tok):
+            if not tok or re.match(r"^[^\w'’\-]+$", tok):
                 full_be.append(tok)
                 full_ru.append(tok)
                 continue
+
+            # Hyphenated pinyin (e.g. Zhuang-zi, Xi-Jinping)
+            if '-' in tok:
+                subtoks = tok.split('-')
+                be_subs = []
+                ru_subs = []
+                for sub in subtoks:
+                    if not sub:
+                        continue
+                    sub_cap = sub[0].isupper()
+                    sub_syls = segment_pinyin_word(sub)
+                    sub_be = syllables_to_belarusian(sub_syls)
+                    sub_ru = ''.join([pinyin_to_ru.get(s, s) for s in sub_syls])
+                    if sub_cap and sub_be:
+                        sub_be = sub_be[0].upper() + sub_be[1:]
+                        sub_ru = sub_ru[0].upper() + sub_ru[1:]
+                    be_subs.append(sub_be)
+                    ru_subs.append(sub_ru)
+                full_be.append('-'.join(be_subs))
+                full_ru.append('-'.join(ru_subs))
+                continue
+
             is_cap = tok[0].isupper()
-            clean_tok = re.sub(r'[^a-z]', '', clean_pinyin(tok).lower())
+            clean_tok = re.sub(r'[^a-zü0-9]', '', clean_pinyin(tok).lower())
             
             if clean_tok in compound_by_pinyin:
                 comp = compound_by_pinyin[clean_tok]

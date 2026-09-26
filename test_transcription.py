@@ -141,5 +141,28 @@ class TestTranscription(unittest.TestCase):
             res = transcribe_chinese(py)
             self.assertTrue(len(res['be']) > 0)
 
+    def test_pinyin_with_diacritics_and_tones(self):
+        """Праверка піньіня з надрадковымі знакамі (дыякрытыкамі) і лічбамі тонаў."""
+        test_cases = [
+            ("Dèng Xiǎopíng", "Дэн Сьяопін"),
+            ("Xí Jìnpíng", "Сі Дзіньпін"),
+            ("Máo Zédōng", "Мао Дзэдун"),
+            ("Wǔhàn", "Вухань"),
+            ("Zhèngzhōu", "Джэнджоў"),
+            ("Cháng'ān", "Чан’ань"),
+            ("Tiānjīn", "Т’еньдзінь"),
+            ("Tiānshān", "Т’еньшань"),
+            ("Lǐ Qiáng", "Лі Цьян"),
+            ("deng4 xiao3ping2", "дэн сьяопін"),
+            ("Zhuāng-zǐ", "Джуан-дзы"),
+            ("lǜe", "люэ"),
+            ("nǚ", "ню"),
+        ]
+        for py_inp, exp_be in test_cases:
+            res = transcribe_chinese(py_inp)
+            got = res['be'].replace("'", "’")
+            exp = exp_be.replace("'", "’")
+            self.assertEqual(got, exp, f"Failed for pinyin '{py_inp}': got '{got}', expected '{exp}'")
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

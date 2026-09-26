@@ -21,17 +21,35 @@
 
     const BE_VOWELS = new Set('аеёіоуыэюяАЕЁІОУЫЭЮЯ');
 
-    // Remove diacritics from pinyin
+    // Remove tone diacritics and tone numbers from pinyin while preserving ü
+    const PINYIN_TONE_MAP = {
+        'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
+        'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e', 'ê': 'e', 'ế': 'e', 'ề': 'e',
+        'ī': 'i', 'í': 'i', 'ǐ': 'i', 'ì': 'i',
+        'ō': 'o', 'ó': 'o', 'ǒ': 'o', 'ò': 'o',
+        'ū': 'u', 'ú': 'u', 'ǔ': 'u', 'ù': 'u',
+        'ǖ': 'ü', 'ǘ': 'ü', 'ǚ': 'ü', 'ǜ': 'ü', 'ü': 'ü', 'v': 'ü',
+        'Ā': 'a', 'Á': 'a', 'Ǎ': 'a', 'À': 'a',
+        'Ē': 'e', 'É': 'e', 'Ě': 'e', 'È': 'e',
+        'Ī': 'i', 'Í': 'i', 'Ǐ': 'i', 'Ì': 'i',
+        'Ō': 'o', 'Ó': 'o', 'Ǒ': 'o', 'Ò': 'o',
+        'Ū': 'u', 'Ú': 'u', 'Ǔ': 'u', 'Ù': 'u',
+        'Ǖ': 'ü', 'Ǘ': 'ü', 'Ǚ': 'ü', 'Ǜ': 'ü', 'Ü': 'ü', 'V': 'ü'
+    };
+
     function cleanPinyin(py) {
         if (!py) return '';
-        const fromChars = 'āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü';
-        const toChars   = 'aaaaeeeeiiiioooouuuuuuuuu';
         let res = '';
         for (let i = 0; i < py.length; i++) {
-            const ch = py[i].toLowerCase();
-            const idx = fromChars.indexOf(ch);
-            res += (idx !== -1) ? toChars[idx] : ch;
+            const ch = py[i];
+            res += PINYIN_TONE_MAP[ch] !== undefined ? PINYIN_TONE_MAP[ch] : ch.toLowerCase();
         }
+        if (res.normalize) {
+            res = res.normalize('NFD')
+                     .replace(/[\u0300\u0301\u0304\u030c]/g, '')
+                     .normalize('NFC');
+        }
+        res = res.replace(/[1-5]/g, '');
         return res;
     }
 
@@ -47,7 +65,7 @@
     function registerCompound(c) {
         compoundWords.push(c);
         if (c.pinyin) {
-            const cleanPy = cleanPinyin(c.pinyin).toLowerCase().replace(/[^a-z]/g, '');
+            const cleanPy = cleanPinyin(c.pinyin).toLowerCase().replace(/[^a-zü0-9]/g, '');
             if (cleanPy && !compoundByPinyin[cleanPy]) {
                 compoundByPinyin[cleanPy] = c;
             }
@@ -264,18 +282,42 @@
                 pos++;
             }
         } else {
-            // Text is Pinyin
-            const tokens = text.split(/([^\w'’]+)/);
+            // Text is Pinyin (with tones, diacritics, numbers, or hyphens)
+            const tokens = text.split(/([^\p{L}0-9'’\-]+)/u);
             for (const tok of tokens) {
-                if (!tok || /^[^\w'’]+$/.test(tok)) {
+                if (!tok || /^[^\p{L}0-9'’\-]+$/u.test(tok)) {
                     fullBe += tok;
                     fullPinyin += tok;
                     fullRu += tok;
                     continue;
                 }
 
+                // If token contains hyphen, handle hyphenated parts (e.g. Zhuang-zi, Xi-Jinping)
+                if (tok.includes('-')) {
+                    const subtoks = tok.split('-');
+                    const beSubs = [];
+                    const ruSubs = [];
+                    for (const sub of subtoks) {
+                        if (!sub) continue;
+                        const subCap = sub[0] === sub[0].toUpperCase() && sub[0].toLowerCase() !== sub[0].toUpperCase();
+                        const subSyls = segmentPinyinWord(sub);
+                        let subBe = syllablesToBelarusian(subSyls);
+                        let subRu = subSyls.map(s => pinyin_to_ru[s] || s).join('');
+                        if (subCap && subBe.length > 0) {
+                            subBe = subBe[0].toUpperCase() + subBe.slice(1);
+                            subRu = subRu[0].toUpperCase() + subRu.slice(1);
+                        }
+                        beSubs.push(subBe);
+                        ruSubs.push(subRu);
+                    }
+                    fullBe += beSubs.join('-');
+                    fullPinyin += tok;
+                    fullRu += ruSubs.join('-');
+                    continue;
+                }
+
                 const isCap = tok[0] === tok[0].toUpperCase() && tok[0].toLowerCase() !== tok[0].toUpperCase();
-                const cleanTok = cleanPinyin(tok).toLowerCase().replace(/[^a-z]/g, '');
+                const cleanTok = cleanPinyin(tok).toLowerCase().replace(/[^a-zü0-9]/g, '');
 
                 // Check compound match by pinyin (e.g. zhuangzi, beijing, kongzi, etc.)
                 const compMatch = compoundByPinyin[cleanTok];
@@ -452,6 +494,7 @@
             { label: '重庆 (Чунцін)', text: '重庆' },
             { label: '黄河 (Хуанхэ)', text: '黄河' },
             { label: '毛泽东 (Мао Дзэдун)', text: '毛泽东' },
+            { label: 'Dèng Xiǎopíng (Дэн Сьяопін)', text: 'Dèng Xiǎopíng' },
             { label: '你好，世界！', text: '你好，世界！' }
         ],
         ru: [
