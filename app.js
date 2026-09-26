@@ -15,7 +15,8 @@
         ru_to_pinyin,
         toponyms,
         extra_words,
-        char_to_pinyin
+        char_to_pinyin,
+        pinyin_to_chars
     } = PINYIN_DATA;
 
     const BE_VOWELS = new Set('аеёіоуыэюяАЕЁІОУЫЭЮЯ');
@@ -672,7 +673,18 @@
         pinyinKeys.forEach(py => {
             const be = pinyin_to_be[py];
             const ru = pinyin_to_ru[py] || '—';
-            allSyllables.push({ py, be, ru });
+            let charsList = [];
+            if (pinyin_to_chars && pinyin_to_chars[py]) {
+                const c = pinyin_to_chars[py];
+                charsList = Array.isArray(c) ? c : c.split(/\s+/);
+            }
+            allSyllables.push({
+                py,
+                be,
+                ru,
+                charsList,
+                charsText: charsList.join(' ')
+            });
         });
 
         let currentFilter = 'all';
@@ -693,17 +705,21 @@
 
                 if (searchQuery) {
                     const q = searchQuery.toLowerCase();
-                    const match = s.py.includes(q) || s.be.includes(q) || s.ru.includes(q);
+                    const match = s.py.includes(q) || s.be.includes(q) || s.ru.includes(q) || (s.charsText && s.charsText.includes(q));
                     if (!match) return;
                 }
 
                 count++;
                 const tr = document.createElement('tr');
+                const charsHtml = s.charsList && s.charsList.length > 0
+                    ? s.charsList.map(c => `<span class="char-item" title="Уставіць ${c}">${c}</span>`).join(' ')
+                    : '<span class="text-muted">—</span>';
+
                 tr.innerHTML = `
                     <td><strong>${s.py}</strong></td>
                     <td class="be-highlight"><strong>${s.be}</strong></td>
                     <td class="ru-cell">${s.ru}</td>
-                    <td class="chars-cell">—</td>
+                    <td class="chars-cell">${charsHtml}</td>
                 `;
                 tableBody.appendChild(tr);
             });
@@ -719,6 +735,20 @@
                 renderRows();
             });
         }
+
+        // Click on a character inserts it into the main input
+        tableBody.addEventListener('click', (e) => {
+            const item = e.target.closest('.char-item');
+            if (!item) return;
+            const char = item.textContent.trim();
+            const input = document.getElementById('main-input');
+            if (input) {
+                input.value = char;
+                triggerUpdate();
+                input.focus();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
 
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {

@@ -524,8 +524,23 @@ h1 {
 }
 
 .chars-cell {
-    font-size: 1.1rem;
-    letter-spacing: 0.06em;
+    font-size: 1.12rem;
+    letter-spacing: 0.08em;
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "SimSun", sans-serif;
+}
+
+.char-item {
+    display: inline-block;
+    cursor: pointer;
+    padding: 1px 3px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.char-item:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    transform: translateY(-1px) scale(1.1);
 }
 
 /* Info Section */
